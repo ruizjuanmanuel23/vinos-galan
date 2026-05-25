@@ -1,0 +1,29 @@
+# Java / Maven
+backend/target/
+*.class
+*.jar
+*.war
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# Node / Vite
+node_modules/
+frontend/dist/
+frontend/.vite/
+*.log
+
+# Capacitor / Android
+android/
+ios/
+frontend/android/
+frontend/ios/
+
+# Sistema
+.DS_Store
+Thumbs.db
