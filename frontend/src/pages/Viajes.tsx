@@ -49,7 +49,7 @@ export default function Viajes() {
         titulo: `Recorrido ${DIA_LABEL[diaSel]}`,
         clienteIds: seleccionados,
       })
-      navigate(`/viajes/${r.data.id}`)
+      navigate(`/app/viajes/${r.data.id}`)
     } finally { setLoading(false) }
   }
 
@@ -62,7 +62,7 @@ export default function Viajes() {
           <h1 className="page-title">Viajes</h1>
           <p className="page-subtitle">Armá tu recorrido del día o revisá los anteriores</p>
         </div>
-        <Link to="/viajes/nuevo" className="btn-secondary text-xs sm:text-sm">+ Personalizado</Link>
+        <Link to="/app/viajes/nuevo" className="btn-secondary text-xs sm:text-sm">+ Personalizado</Link>
       </div>
 
       {/* RECORRIDO POR DÍA */}
@@ -180,7 +180,7 @@ export default function Viajes() {
                 const total = v.paradas.length
                 const enCurso = v.estado === 'EN_CURSO'
                 return (
-                  <Link key={v.id} to={`/viajes/${v.id}`} className="block card p-3 active:bg-gray-50">
+                  <Link key={v.id} to={`/app/viajes/${v.id}`} className="block card p-3 active:bg-gray-50">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
@@ -240,7 +240,7 @@ export default function Viajes() {
                           </div>
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Link to={`/viajes/${v.id}`} className="text-botella-700 font-semibold hover:underline">Ver →</Link>
+                          <Link to={`/app/viajes/${v.id}`} className="text-botella-700 font-semibold hover:underline">Ver →</Link>
                         </td>
                       </tr>
                     )

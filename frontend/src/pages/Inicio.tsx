@@ -24,10 +24,10 @@ export default function Inicio() {
   }, [dia])
 
   const cards = [
-    { label: 'Clientes',         value: stats.clientes,  color: 'text-blue-600',     bg: 'bg-blue-50',     to: '/clientes' },
-    { label: 'Vinos en stock',   value: stats.vinos,     color: 'text-botella-700',  bg: 'bg-botella-50',  to: '/vinos' },
-    { label: 'Stock bajo',       value: stats.stockBajo, color: stats.stockBajo > 0 ? 'text-red-600' : 'text-emerald-600', bg: stats.stockBajo > 0 ? 'bg-red-50' : 'bg-emerald-50', to: '/vinos' },
-    { label: 'Viajes hechos',    value: stats.viajes,    color: 'text-dorado-700',   bg: 'bg-dorado-50',   to: '/viajes' },
+    { label: 'Clientes',         value: stats.clientes,  color: 'text-blue-600',     bg: 'bg-blue-50',     to: '/app/clientes' },
+    { label: 'Vinos en stock',   value: stats.vinos,     color: 'text-botella-700',  bg: 'bg-botella-50',  to: '/app/vinos' },
+    { label: 'Stock bajo',       value: stats.stockBajo, color: stats.stockBajo > 0 ? 'text-red-600' : 'text-emerald-600', bg: stats.stockBajo > 0 ? 'bg-red-50' : 'bg-emerald-50', to: '/app/vinos' },
+    { label: 'Viajes hechos',    value: stats.viajes,    color: 'text-dorado-700',   bg: 'bg-dorado-50',   to: '/app/viajes' },
   ]
 
   return (
@@ -37,11 +37,11 @@ export default function Inicio() {
           <h1 className="page-title">Buen día 🍇</h1>
           <p className="page-subtitle capitalize">{hoy}</p>
         </div>
-        <Link to="/viajes/nuevo" className="btn-dorado">🚚 Armar viaje</Link>
+        <Link to="/app/viajes/nuevo" className="btn-dorado">🚚 Armar viaje</Link>
       </div>
 
       {viajeActivo && (
-        <Link to={`/viajes/${viajeActivo.id}`} className="block card p-4 sm:p-5 border-l-4 border-dorado-500 hover:shadow-md transition">
+        <Link to={`/app/viajes/${viajeActivo.id}`} className="block card p-4 sm:p-5 border-l-4 border-dorado-500 hover:shadow-md transition">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <span className="chip bg-dorado-100 text-dorado-800">🚚 En curso</span>
@@ -73,14 +73,14 @@ export default function Inicio() {
               <h2 className="text-base sm:text-lg font-bold text-gray-900">📍 Recorrido de hoy</h2>
               <p className="text-xs text-gray-500 truncate">Clientes asignados a {DIA_LABEL[dia].toLowerCase()}</p>
             </div>
-            <Link to="/viajes" className="text-xs sm:text-sm text-botella-700 font-semibold hover:underline shrink-0">Ver todos →</Link>
+            <Link to="/app/viajes" className="text-xs sm:text-sm text-botella-700 font-semibold hover:underline shrink-0">Ver todos →</Link>
           </div>
           {clientesHoy.length === 0 ? (
             <p className="text-center text-sm text-gray-400 py-6">Sin clientes para {DIA_LABEL[dia].toLowerCase()}.</p>
           ) : (
             <div className="divide-y divide-gray-100">
               {clientesHoy.slice(0, 5).map(c => (
-                <Link key={c.id} to={`/clientes/${c.id}`} className="flex items-center justify-between py-2.5 sm:py-3 hover:bg-gray-50 -mx-2 px-2 rounded transition">
+                <Link key={c.id} to={`/app/clientes/${c.id}`} className="flex items-center justify-between py-2.5 sm:py-3 hover:bg-gray-50 -mx-2 px-2 rounded transition">
                   <div className="min-w-0 flex-1">
                     <p className="font-semibold text-sm sm:text-base text-gray-900 truncate">{c.nombre}</p>
                     {c.direccion && <p className="text-xs text-gray-500 truncate">📍 {c.direccion}</p>}
@@ -89,7 +89,7 @@ export default function Inicio() {
                 </Link>
               ))}
               {clientesHoy.length > 5 && (
-                <Link to="/viajes" className="block text-center text-xs text-botella-700 font-semibold pt-3 hover:underline">+ {clientesHoy.length - 5} más</Link>
+                <Link to="/app/viajes" className="block text-center text-xs text-botella-700 font-semibold pt-3 hover:underline">+ {clientesHoy.length - 5} más</Link>
               )}
             </div>
           )}
@@ -98,21 +98,21 @@ export default function Inicio() {
         <div className="card p-4 sm:p-5">
           <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">Accesos rápidos</h2>
           <div className="grid grid-cols-3 lg:grid-cols-1 gap-2">
-            <Link to="/ventas/nueva" className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-center lg:text-left">
+            <Link to="/app/ventas/nueva" className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-center lg:text-left">
               <span className="text-2xl">🛒</span>
               <div>
                 <p className="font-bold text-xs sm:text-sm text-gray-900">Nueva venta</p>
                 <p className="text-[10px] text-gray-500 hidden lg:block">Descontar stock</p>
               </div>
             </Link>
-            <Link to="/clientes" className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-center lg:text-left">
+            <Link to="/app/clientes" className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-center lg:text-left">
               <span className="text-2xl">👥</span>
               <div>
                 <p className="font-bold text-xs sm:text-sm text-gray-900">Clientes</p>
                 <p className="text-[10px] text-gray-500 hidden lg:block">Alta y edición</p>
               </div>
             </Link>
-            <Link to="/vinos" className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-center lg:text-left">
+            <Link to="/app/vinos" className="flex flex-col lg:flex-row items-center gap-2 lg:gap-3 p-3 rounded-lg hover:bg-gray-50 transition text-center lg:text-left">
               <span className="text-2xl">🍷</span>
               <div>
                 <p className="font-bold text-xs sm:text-sm text-gray-900">Stock</p>

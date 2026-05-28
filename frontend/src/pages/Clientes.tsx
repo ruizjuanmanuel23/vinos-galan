@@ -61,7 +61,7 @@ export default function Clientes() {
       <div className="lg:hidden space-y-2">
         {filtrados.length === 0 && <p className="text-center text-sm text-gray-400 py-8">Sin clientes para mostrar.</p>}
         {filtrados.map(c => (
-          <Link key={c.id} to={`/clientes/${c.id}`} className="block card p-3 active:bg-gray-50">
+          <Link key={c.id} to={`/app/clientes/${c.id}`} className="block card p-3 active:bg-gray-50">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-gray-900 truncate">{c.nombre}</p>
@@ -106,7 +106,7 @@ export default function Clientes() {
                   {c.diaReparto ? <span className="chip bg-botella-100 text-botella-800">{DIA_LABEL[c.diaReparto]}</span> : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link to={`/clientes/${c.id}`} className="text-botella-700 font-semibold hover:underline">Ficha →</Link>
+                  <Link to={`/app/clientes/${c.id}`} className="text-botella-700 font-semibold hover:underline">Ficha →</Link>
                 </td>
               </tr>
             ))}

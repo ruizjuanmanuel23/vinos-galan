@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
+import Landing from './pages/Landing'
 import Inicio from './pages/Inicio'
 import Viajes from './pages/Viajes'
 import DetalleViaje from './pages/DetalleViaje'
@@ -13,18 +14,24 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route element={<Layout />}>
-          <Route path="/" element={<Inicio />} />
-          <Route path="/viajes" element={<Viajes />} />
-          <Route path="/viajes/nuevo" element={<NuevoViaje />} />
-          <Route path="/viajes/:id" element={<DetalleViaje />} />
-          <Route path="/recorrido" element={<Navigate to="/viajes" replace />} />
-          <Route path="/clientes" element={<Clientes />} />
-          <Route path="/clientes/:id" element={<ClienteFicha />} />
-          <Route path="/vinos" element={<Vinos />} />
-          <Route path="/ventas/nueva" element={<NuevaVenta />} />
+        {/* Landing pública */}
+        <Route path="/" element={<Landing />} />
+
+        {/* Sistema interno bajo /app */}
+        <Route path="/app" element={<Layout />}>
+          <Route index element={<Inicio />} />
+          <Route path="viajes" element={<Viajes />} />
+          <Route path="viajes/nuevo" element={<NuevoViaje />} />
+          <Route path="viajes/:id" element={<DetalleViaje />} />
+          <Route path="recorrido" element={<Navigate to="/app/viajes" replace />} />
+          <Route path="clientes" element={<Clientes />} />
+          <Route path="clientes/:id" element={<ClienteFicha />} />
+          <Route path="vinos" element={<Vinos />} />
+          <Route path="ventas/nueva" element={<NuevaVenta />} />
         </Route>
-        <Route path="*" element={<Navigate to="/" />} />
+
+        {/* Redirects de rutas viejas */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   )

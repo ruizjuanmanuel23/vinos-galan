@@ -63,7 +63,7 @@ export default function NuevaVenta() {
         clienteId: Number(clienteId), notas,
         detalles: items.map(i => ({ vinoId: i.vino.id, cantidad: i.cantidad })),
       })
-      navigate(`/clientes/${clienteId}`)
+      navigate(`/app/clientes/${clienteId}`)
     } catch (e: any) {
       setError(typeof e.response?.data === 'string' ? e.response.data : 'Error al registrar la venta')
     }
@@ -71,7 +71,7 @@ export default function NuevaVenta() {
 
   return (
     <div className="space-y-4 sm:space-y-5 pb-32 lg:pb-0">
-      <Link to="/" className="text-botella-700 text-sm font-medium hover:underline">← Inicio</Link>
+      <Link to="/app" className="text-botella-700 text-sm font-medium hover:underline">← Inicio</Link>
       <div>
         <h1 className="page-title">Nueva venta</h1>
         <p className="page-subtitle">Cliente + vinos. El stock se descuenta solo.</p>

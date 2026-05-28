@@ -51,7 +51,7 @@ export default function ClienteFicha() {
     if (confirm('¿Eliminar?')) { await api.delete(`/deudas/${deuId}`); cargar() }
   }
   const eliminarCliente = async () => {
-    if (confirm('¿Eliminar cliente?')) { await api.delete(`/clientes/${id}`); navigate('/clientes') }
+    if (confirm('¿Eliminar cliente?')) { await api.delete(`/clientes/${id}`); navigate('/app/clientes') }
   }
 
   if (!cliente) return <p className="text-center text-gray-400 py-12">Cargando...</p>
@@ -62,7 +62,7 @@ export default function ClienteFicha() {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <Link to="/clientes" className="text-botella-700 text-sm font-medium hover:underline">← Clientes</Link>
+      <Link to="/app/clientes" className="text-botella-700 text-sm font-medium hover:underline">← Clientes</Link>
 
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="min-w-0">
@@ -73,7 +73,7 @@ export default function ClienteFicha() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Link to={`/ventas/nueva?cliente=${cliente.id}`} className="btn-primary text-xs sm:text-sm">+ Venta</Link>
+          <Link to={`/app/ventas/nueva?cliente=${cliente.id}`} className="btn-primary text-xs sm:text-sm">+ Venta</Link>
           <button onClick={() => setShowEditar(true)} className="btn-secondary text-xs sm:text-sm">Editar</button>
         </div>
       </div>

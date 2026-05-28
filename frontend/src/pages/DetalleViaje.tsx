@@ -27,7 +27,7 @@ export default function DetalleViaje() {
   }
   const eliminar = async () => {
     if (!confirm('¿Eliminar este viaje?')) return
-    await api.delete(`/viajes/${id}`); navigate('/viajes')
+    await api.delete(`/viajes/${id}`); navigate('/app/viajes')
   }
 
   if (!viaje) return <p className="text-center text-gray-400 py-12">Cargando...</p>
@@ -41,7 +41,7 @@ export default function DetalleViaje() {
 
   return (
     <div className="space-y-4 sm:space-y-5">
-      <Link to="/viajes" className="text-botella-700 text-sm font-medium hover:underline">← Viajes</Link>
+      <Link to="/app/viajes" className="text-botella-700 text-sm font-medium hover:underline">← Viajes</Link>
 
       <div className="flex items-start justify-between gap-2 flex-wrap">
         <div className="min-w-0">
@@ -128,7 +128,7 @@ function ParadaCard({ parada, numero, onEstado, onEliminar, bloqueado }: {
         <div className="w-8 h-8 rounded-full bg-botella-100 text-botella-800 font-black text-sm flex items-center justify-center shrink-0">{numero}</div>
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
-            <Link to={`/clientes/${c.id}`} className="font-bold text-gray-900 hover:text-botella-700 truncate">{c.nombre}</Link>
+            <Link to={`/app/clientes/${c.id}`} className="font-bold text-gray-900 hover:text-botella-700 truncate">{c.nombre}</Link>
             {parada.estado === 'VISITADA' && parada.horaVisita && (
               <span className="chip bg-emerald-100 text-emerald-700 shrink-0">✓ {fmtHora(parada.horaVisita)}</span>
             )}

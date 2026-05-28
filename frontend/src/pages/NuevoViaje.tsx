@@ -41,13 +41,13 @@ export default function NuevoViaje() {
       const r = await api.post('/viajes', {
         fecha, titulo: titulo || `Viaje ${new Date(fecha+'T00:00:00').toLocaleDateString('es-AR')}`, notas, clienteIds: seleccionados,
       })
-      navigate(`/viajes/${r.data.id}`)
+      navigate(`/app/viajes/${r.data.id}`)
     } finally { setLoading(false) }
   }
 
   return (
     <div className="space-y-4 sm:space-y-5 pb-32 lg:pb-0">
-      <Link to="/viajes" className="text-botella-700 text-sm font-medium hover:underline">← Viajes</Link>
+      <Link to="/app/viajes" className="text-botella-700 text-sm font-medium hover:underline">← Viajes</Link>
       <div>
         <h1 className="page-title">Nuevo viaje</h1>
         <p className="page-subtitle">Armá un recorrido con los clientes que vas a visitar</p>
