@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import PasswordModal from './PasswordModal'
+import { isAuth } from '../services/auth'
 
 const menu = [
   { to: '/',          label: 'Inicio',    exact: true },
@@ -9,9 +11,14 @@ const menu = [
 ]
 
 export default function PublicLayout() {
-  const [scrolled, setScrolled] = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled]   = useState(false)
+  const [menuOpen, setMenuOpen]   = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [pwdOpen, setPwdOpen]     = useState(false)
+  const [pwdAction, setPwdAction] = useState<'app' | 'apk'>('app')
+  const drawerRef = useRef<HTMLDivElement>(null)
   const loc = useLocation()
+  const navigate = useNavigate()
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 30)
@@ -19,10 +26,49 @@ export default function PublicLayout() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  useEffect(() => { setMenuOpen(false) }, [loc.pathname])
+  useEffect(() => {
+    setMenuOpen(false)
+    setDrawerOpen(false)
+  }, [loc.pathname])
 
-  // Header transparente solo en /, sólido en otras
+  // Cerrar drawer al click afuera
+  useEffect(() => {
+    if (!drawerOpen) return
+    const handler = (e: MouseEvent) => {
+      if (drawerRef.current && !drawerRef.current.contains(e.target as Node)) setDrawerOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [drawerOpen])
+
   const isHome = loc.pathname === '/'
+
+  // Abrir sistema interno: si está logueado entra directo, si no pide clave
+  const handleAppClick = () => {
+    setDrawerOpen(false)
+    if (isAuth()) {
+      navigate('/app')
+    } else {
+      setPwdAction('app')
+      setPwdOpen(true)
+    }
+  }
+
+  // Descargar APK: si está logueado descarga directo, si no pide clave
+  const handleApkClick = () => {
+    setDrawerOpen(false)
+    if (isAuth()) {
+      window.location.href = '/vinos-galan.apk'
+    } else {
+      setPwdAction('apk')
+      setPwdOpen(true)
+    }
+  }
+
+  const handlePwdSuccess = () => {
+    if (pwdAction === 'app') navigate('/app')
+    else window.location.href = '/vinos-galan.apk'
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-botella-950 text-white">
@@ -48,7 +94,7 @@ export default function PublicLayout() {
             </Link>
 
             {/* Menú desktop */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
               {menu.map(m => (
                 <NavLink
                   key={m.to}
@@ -72,78 +118,114 @@ export default function PublicLayout() {
               ))}
             </nav>
 
-            {/* CTAs */}
-            <div className="hidden md:flex items-center gap-2">
-              <Link
-                to="/app"
-                className="px-4 py-2 text-xs font-bold rounded-lg border border-botella-700 hover:border-dorado-400 hover:bg-botella-800/50 text-botella-100 hover:text-white transition"
+            {/* Hamburguesa derecha (siempre visible) */}
+            <div className="flex items-center gap-2 shrink-0" ref={drawerRef}>
+              <button
+                onClick={() => setDrawerOpen(o => !o)}
+                className={`p-2.5 rounded-lg transition border ${
+                  drawerOpen
+                    ? 'bg-dorado-500 border-dorado-500 text-botella-950'
+                    : 'border-botella-700 hover:border-dorado-400 text-botella-100 hover:bg-botella-800/50'
+                }`}
+                aria-label="Menú de acceso"
               >
-                Acceso interno
-              </Link>
-              <a
-                href="/vinos-galan.apk"
-                download
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-dorado-500 hover:bg-dorado-400 text-botella-950 transition flex items-center gap-1.5"
-              >
-                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                  {drawerOpen
+                    ? <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+                    : <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />}
                 </svg>
-                APK
-              </a>
-            </div>
+              </button>
 
-            {/* Toggle mobile */}
-            <button
-              onClick={() => setMenuOpen(o => !o)}
-              className="md:hidden p-2 rounded-lg hover:bg-botella-800/50 transition"
-              aria-label="Menú"
-            >
-              <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2}>
-                {menuOpen
-                  ? <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
-                  : <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />}
-              </svg>
-            </button>
+              {/* Drawer/dropdown del menú hamburguesa */}
+              {drawerOpen && (
+                <div className="absolute top-full right-4 sm:right-6 lg:right-8 mt-2 w-72 rounded-2xl bg-botella-900 border border-botella-700/80 shadow-2xl overflow-hidden">
+                  {/* Header drawer */}
+                  <div className="px-5 py-4 bg-gradient-to-r from-botella-800 to-botella-900 border-b border-botella-700/60">
+                    <p className="text-[10px] text-dorado-300 tracking-[0.25em] uppercase font-bold">Acceso</p>
+                    <p className="text-sm text-botella-200 mt-0.5">Sistema interno y app</p>
+                  </div>
+
+                  {/* Acceso interno */}
+                  <button
+                    onClick={handleAppClick}
+                    className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-botella-800/70 transition border-b border-botella-800/60"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-botella-700/40 border border-botella-600 flex items-center justify-center shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-dorado-300" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                        <line x1="3" y1="9" x2="21" y2="9" />
+                        <line x1="9" y1="21" x2="9" y2="9" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-white text-sm">🔐 Acceso interno</p>
+                      <p className="text-[11px] text-botella-300 mt-0.5">
+                        {isAuth() ? 'Ya estás logueado · Entrar al sistema' : 'Requiere clave de acceso'}
+                      </p>
+                    </div>
+                    <svg className="w-4 h-4 text-botella-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+
+                  {/* Descargar APK */}
+                  <button
+                    onClick={handleApkClick}
+                    className="w-full px-5 py-4 flex items-center gap-3 text-left hover:bg-botella-800/70 transition"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-dorado-500/15 border border-dorado-500/40 flex items-center justify-center shrink-0">
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 text-dorado-300" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-white text-sm">📱 Descargar APK</p>
+                      <p className="text-[11px] text-botella-300 mt-0.5">
+                        App Android · 1.1 MB · Requiere clave
+                      </p>
+                    </div>
+                    <svg className="w-4 h-4 text-botella-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
+                      <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+
+                  {/* Menú navegación en mobile (queda más compacto) */}
+                  <div className="md:hidden border-t border-botella-800/60 py-2">
+                    <p className="px-5 py-2 text-[10px] text-dorado-300 tracking-[0.25em] uppercase font-bold">Navegación</p>
+                    {menu.map(m => (
+                      <NavLink
+                        key={m.to}
+                        to={m.to}
+                        end={m.exact}
+                        className={({ isActive }) =>
+                          `block px-5 py-2.5 text-sm font-semibold transition ${
+                            isActive ? 'text-dorado-300 bg-botella-800/50' : 'text-botella-100 active:bg-botella-800/40'
+                          }`
+                        }
+                      >
+                        {m.label}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-
-          {/* Menú mobile (drawer) */}
-          {menuOpen && (
-            <div className="md:hidden border-t border-botella-800 pb-4 pt-2 space-y-1">
-              {menu.map(m => (
-                <NavLink
-                  key={m.to}
-                  to={m.to}
-                  end={m.exact}
-                  className={({ isActive }) =>
-                    `block px-4 py-3 rounded-lg text-sm font-semibold transition ${
-                      isActive ? 'bg-botella-800 text-dorado-300' : 'text-botella-100 active:bg-botella-800/70'
-                    }`
-                  }
-                >
-                  {m.label}
-                </NavLink>
-              ))}
-              <div className="pt-2 grid grid-cols-2 gap-2 px-1">
-                <Link
-                  to="/app"
-                  className="px-4 py-3 text-center text-xs font-bold rounded-lg border border-botella-700 text-botella-100"
-                >
-                  Acceso interno
-                </Link>
-                <a
-                  href="/vinos-galan.apk"
-                  download
-                  className="px-4 py-3 text-center text-xs font-bold rounded-lg bg-dorado-500 text-botella-950"
-                >
-                  ↓ Descargar APK
-                </a>
-              </div>
-            </div>
-          )}
         </div>
       </header>
+
+      {/* Modal de clave */}
+      <PasswordModal
+        open={pwdOpen}
+        onClose={() => setPwdOpen(false)}
+        onSuccess={handlePwdSuccess}
+        title={pwdAction === 'app' ? 'Acceso al sistema' : 'Descarga de la app'}
+        subtitle={pwdAction === 'app'
+          ? 'Ingresá la clave para entrar al panel interno'
+          : 'Ingresá la clave para descargar el APK'}
+      />
 
       {/* CONTENIDO */}
       <main className="flex-1">

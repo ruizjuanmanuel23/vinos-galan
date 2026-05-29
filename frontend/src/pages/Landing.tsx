@@ -1,10 +1,19 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CATALOGO_DESTACADO, IMG } from '../data/catalogoDestacado'
 import { vinosAPI } from '../services/storage'
+import { isAuth } from '../services/auth'
+import PasswordModal from '../components/PasswordModal'
 
 export default function Landing() {
   const navigate = useNavigate()
+  const [pwdOpen, setPwdOpen] = useState(false)
+
+  const handleApk = (e: React.MouseEvent) => {
+    if (isAuth()) return // deja el download nativo
+    e.preventDefault()
+    setPwdOpen(true)
+  }
 
   // Si la app se abre desde el ícono instalado (APK / PWA standalone), saltea la landing
   useEffect(() => {
@@ -32,6 +41,13 @@ export default function Landing() {
 
   return (
     <div className="text-white">
+      <PasswordModal
+        open={pwdOpen}
+        onClose={() => setPwdOpen(false)}
+        onSuccess={() => { window.location.href = '/vinos-galan.apk' }}
+        title="Descarga de la app"
+        subtitle="Ingresá la clave para descargar el APK"
+      />
       {/* HERO */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Imagen de fondo */}
@@ -73,6 +89,7 @@ export default function Landing() {
             <a
               href="/vinos-galan.apk"
               download
+              onClick={handleApk}
               className="px-6 py-4 rounded-xl bg-botella-800/40 hover:bg-botella-700/50 border-2 border-botella-600 hover:border-dorado-400 text-white font-bold text-base sm:text-lg transition active:scale-[0.98] flex-1 backdrop-blur-sm"
             >
               📱 Descargar app
@@ -258,6 +275,7 @@ export default function Landing() {
             <a
               href="/vinos-galan.apk"
               download
+              onClick={handleApk}
               className="inline-flex items-center gap-3 px-7 py-4 rounded-xl bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black text-lg shadow-2xl hover:shadow-dorado-500/40 transition active:scale-[0.98]"
             >
               <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">

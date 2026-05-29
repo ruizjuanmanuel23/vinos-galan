@@ -1,4 +1,5 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { logout } from '../services/auth'
 
 import { Link } from 'react-router-dom'
 
@@ -19,6 +20,15 @@ function NavIcon({ d }: { d: string }) {
 }
 
 export default function Layout() {
+  const navigate = useNavigate()
+
+  const cerrarSesion = () => {
+    if (confirm('¿Cerrar sesión? Vas a salir del sistema interno.')) {
+      logout()
+      navigate('/')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* ========== SIDEBAR — solo desktop ========== */}
@@ -58,6 +68,20 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
+
+        {/* Botón cerrar sesión */}
+        <button
+          onClick={cerrarSesion}
+          title="Cerrar sesión"
+          className="flex items-center h-11 px-3 mx-2 mb-2 rounded-lg text-sm font-semibold text-botella-200 hover:bg-red-700/40 hover:text-white transition"
+        >
+          <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span className="ml-3 whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">Cerrar sesión</span>
+        </button>
 
         <div className="h-10 px-3 border-t border-botella-800 flex items-center text-[10px] text-botella-300 tracking-wider uppercase whitespace-nowrap overflow-hidden">
           <span className="shrink-0">v1.0</span>

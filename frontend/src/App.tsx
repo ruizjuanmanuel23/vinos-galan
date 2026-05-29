@@ -1,10 +1,12 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import PublicLayout from './components/PublicLayout'
+import RequireAuth from './components/RequireAuth'
 import Landing from './pages/Landing'
 import Catalogo from './pages/Catalogo'
 import Nosotros from './pages/Nosotros'
 import Contacto from './pages/Contacto'
+import Login from './pages/Login'
 import Inicio from './pages/Inicio'
 import Viajes from './pages/Viajes'
 import DetalleViaje from './pages/DetalleViaje'
@@ -26,8 +28,11 @@ export default function App() {
           <Route path="/contacto" element={<Contacto />} />
         </Route>
 
-        {/* SISTEMA INTERNO */}
-        <Route path="/app" element={<Layout />}>
+        {/* LOGIN — sin layout */}
+        <Route path="/login" element={<Login />} />
+
+        {/* SISTEMA INTERNO — protegido */}
+        <Route path="/app" element={<RequireAuth><Layout /></RequireAuth>}>
           <Route index element={<Inicio />} />
           <Route path="viajes" element={<Viajes />} />
           <Route path="viajes/nuevo" element={<NuevoViaje />} />
