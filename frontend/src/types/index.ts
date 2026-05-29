@@ -32,6 +32,12 @@ export interface Vino {
   precioCosto: number
   stock: number
   activo: boolean
+  /** Foto del vino en base64 (data URL) o URL externa. Opcional. */
+  fotoUrl?: string | null
+  /** Descripción/nota de cata para el catálogo público. Opcional. */
+  descripcion?: string | null
+  /** Si se muestra en el catálogo público de la web (default true). */
+  mostrarEnCatalogo?: boolean
   creadoEn: string
 }
 

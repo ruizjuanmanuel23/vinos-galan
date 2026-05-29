@@ -33,7 +33,7 @@ export default function Layout() {
           </div>
           <div className="ml-3 leading-tight opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">
             <div className="font-black tracking-wide text-sm">VINOS GALAN</div>
-            <div className="text-[10px] text-dorado-300 tracking-widest uppercase">Distribución</div>
+            <div className="text-[10px] text-dorado-300 tracking-widest uppercase">La Plata · Desde 1942</div>
           </div>
         </Link>
 
@@ -75,7 +75,7 @@ export default function Layout() {
             </div>
             <div className="leading-tight">
               <div className="font-black tracking-wide text-sm">VINOS GALAN</div>
-              <div className="text-[9px] text-dorado-300 tracking-widest uppercase">Distribución</div>
+              <div className="text-[9px] text-dorado-300 tracking-widest uppercase">La Plata · Desde 1942</div>
             </div>
           </Link>
         </header>

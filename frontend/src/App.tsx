@@ -1,6 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
+import PublicLayout from './components/PublicLayout'
 import Landing from './pages/Landing'
+import Catalogo from './pages/Catalogo'
+import Nosotros from './pages/Nosotros'
+import Contacto from './pages/Contacto'
 import Inicio from './pages/Inicio'
 import Viajes from './pages/Viajes'
 import DetalleViaje from './pages/DetalleViaje'
@@ -14,10 +18,15 @@ export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Landing pública */}
-        <Route path="/" element={<Landing />} />
+        {/* SITIO PÚBLICO */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<Landing />} />
+          <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/nosotros" element={<Nosotros />} />
+          <Route path="/contacto" element={<Contacto />} />
+        </Route>
 
-        {/* Sistema interno bajo /app */}
+        {/* SISTEMA INTERNO */}
         <Route path="/app" element={<Layout />}>
           <Route index element={<Inicio />} />
           <Route path="viajes" element={<Viajes />} />
@@ -30,7 +39,6 @@ export default function App() {
           <Route path="ventas/nueva" element={<NuevaVenta />} />
         </Route>
 
-        {/* Redirects de rutas viejas */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

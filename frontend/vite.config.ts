@@ -9,9 +9,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon-180x180.png'],
       manifest: {
-        name: 'Vinos Galán',
+        name: 'Vinos Galán La Plata',
         short_name: 'Vinos Galán',
-        description: 'Sistema de distribución y reparto de vinos',
+        description: 'Distribuidora de vinos en La Plata desde 1942',
         theme_color: '#1d3825',
         background_color: '#1d3825',
         display: 'standalone',

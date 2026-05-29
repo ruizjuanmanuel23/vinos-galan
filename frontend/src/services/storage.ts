@@ -118,6 +118,9 @@ export const vinosAPI = {
       precioCosto: Number(data.precioCosto ?? 0),
       stock: Number(data.stock ?? 0),
       activo: data.activo ?? true,
+      fotoUrl: data.fotoUrl ?? null,
+      descripcion: data.descripcion ?? null,
+      mostrarEnCatalogo: data.mostrarEnCatalogo ?? true,
       creadoEn: nowISO(),
     }
     list.push(nuevo)
