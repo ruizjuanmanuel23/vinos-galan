@@ -1,6 +1,25 @@
-import { Link } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 export default function Landing() {
+  const navigate = useNavigate()
+
+  // Si la app se está abriendo desde el ícono instalado (APK / PWA standalone),
+  // saltea la landing y va directo al sistema interno.
+  // Cuando se abre desde un navegador web normal, sigue mostrando la landing.
+  useEffect(() => {
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.matchMedia('(display-mode: fullscreen)').matches ||
+      window.matchMedia('(display-mode: minimal-ui)').matches ||
+      (window.navigator as any).standalone === true ||
+      document.referrer.startsWith('android-app://')
+
+    if (isStandalone) {
+      navigate('/app', { replace: true })
+    }
+  }, [navigate])
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-botella-950 via-botella-900 to-botella-800 flex flex-col">
       {/* Patrón decorativo */}
