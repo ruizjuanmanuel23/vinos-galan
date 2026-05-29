@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.vinosgalan.app",
+        "sha256_cert_fingerprints": ["6D:F8:A5:44:3B:BC:49:2D:BC:E4:8D:ED:45:DB:AE:2E:30:9A:AD:C1:15:F3:58:3A:DE:F8:94:86:01:8E:CE:8D"]
+      }
+    }]
