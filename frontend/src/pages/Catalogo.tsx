@@ -147,53 +147,57 @@ export default function Catalogo() {
 
   return (
     <div className="text-white">
-      {/* HERO chico */}
-      <section className="relative pt-32 pb-16 overflow-hidden">
-        <div className="absolute inset-0 bg-cover bg-center opacity-25" style={{ backgroundImage: `url(${IMG.bottles})` }} />
-        <div className="absolute inset-0 bg-gradient-to-b from-botella-950 via-botella-950/80 to-botella-950" />
-        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <p className="text-xs tracking-[0.3em] uppercase text-dorado-400 font-semibold mb-3">Catálogo</p>
-          <h1 className="text-5xl sm:text-7xl font-black mb-4" style={{ fontFamily: 'Georgia, serif' }}>
-            Nuestros vinos
-          </h1>
-          <p className="text-botella-200 max-w-2xl mx-auto text-lg">
-            Armá tu pedido y enviánoslo por WhatsApp. Reparto a domicilio en La Plata.
-          </p>
+      {/* HEADER + FILTROS — compactos y sticky, sin hero grande */}
+      <section className="pt-20 sm:pt-24 bg-botella-950">
+        {/* Banda fina con título */}
+        <div className="border-b border-botella-800/60 bg-gradient-to-r from-botella-950 via-botella-900 to-botella-950">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <p className="text-[10px] tracking-[0.3em] uppercase text-dorado-400 font-bold mb-1">Catálogo</p>
+              <h1 className="text-2xl sm:text-3xl font-black leading-none" style={{ fontFamily: 'Georgia, serif' }}>
+                Nuestros vinos
+              </h1>
+              <p className="text-xs text-botella-300 mt-1">Armá tu pedido y enviánoslo por WhatsApp</p>
+            </div>
+            <p className="text-xs text-botella-400 uppercase tracking-widest font-semibold">
+              <span className="text-dorado-300 font-black text-base">{filtrados.length}</span> {filtrados.length === 1 ? 'etiqueta' : 'etiquetas'}
+            </p>
+          </div>
+        </div>
+
+        {/* Filtros sticky */}
+        <div className="bg-botella-950/95 backdrop-blur-md border-b border-botella-800 sticky top-16 sm:top-20 z-30">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
+            <div className="flex-1">
+              <input
+                type="text"
+                placeholder="🔍 Buscar vino, varietal o bodega..."
+                value={busq}
+                onChange={e => setBusq(e.target.value)}
+                className="w-full bg-botella-800/50 border border-botella-700 rounded-lg px-4 py-2 text-sm text-white placeholder-botella-400 focus:outline-none focus:border-dorado-400 transition"
+              />
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1">
+              {varietales.map(v => (
+                <button
+                  key={v}
+                  onClick={() => setVarietal(v)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition ${
+                    varietal === v
+                      ? 'bg-dorado-500 text-botella-950'
+                      : 'bg-botella-800/60 border border-botella-700 text-botella-200 hover:border-dorado-400'
+                  }`}
+                >
+                  {v === 'TODOS' ? 'Todos' : v}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Filtros */}
-      <section className="bg-botella-900/40 backdrop-blur-sm border-y border-botella-800 sticky top-16 sm:top-20 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
-          <div className="flex-1">
-            <input
-              type="text"
-              placeholder="🔍 Buscar vino, varietal o bodega..."
-              value={busq}
-              onChange={e => setBusq(e.target.value)}
-              className="w-full bg-botella-800/50 border border-botella-700 rounded-lg px-4 py-2.5 text-sm text-white placeholder-botella-400 focus:outline-none focus:border-dorado-400 transition"
-            />
-          </div>
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1">
-            {varietales.map(v => (
-              <button
-                key={v}
-                onClick={() => setVarietal(v)}
-                className={`shrink-0 px-3 py-2 rounded-full text-xs font-bold whitespace-nowrap transition ${
-                  varietal === v
-                    ? 'bg-dorado-500 text-botella-950'
-                    : 'bg-botella-800/60 border border-botella-700 text-botella-200 hover:border-dorado-400'
-                }`}
-              >
-                {v === 'TODOS' ? 'Todos' : v}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Grid */}
-      <section className="py-12 sm:py-16 bg-botella-950 pb-32 lg:pb-40">
+      {/* Grid — más denso y compacto */}
+      <section className="py-5 sm:py-6 bg-botella-950 pb-32 lg:pb-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {filtrados.length === 0 ? (
             <div className="text-center py-20">
@@ -201,73 +205,62 @@ export default function Catalogo() {
               <p className="text-botella-300">No encontramos vinos con esos filtros.</p>
             </div>
           ) : (
-            <>
-              <p className="text-xs text-botella-400 uppercase tracking-widest font-semibold mb-6">
-                {filtrados.length} {filtrados.length === 1 ? 'etiqueta' : 'etiquetas'}
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-                {filtrados.map(v => {
-                  const enCarrito = cantidadEnCarrito(v.id)
-                  return (
-                    <article
-                      key={v.id}
-                      className="group bg-botella-900/40 backdrop-blur-sm rounded-2xl overflow-hidden border border-botella-700/40 hover:border-dorado-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-dorado-500/10 flex flex-col"
-                    >
-                      <div className="aspect-square overflow-hidden bg-botella-950 relative">
-                        <img
-                          src={v.fotoUrl}
-                          alt={v.nombre}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-botella-950 via-transparent to-transparent opacity-50" />
-                        {enCarrito > 0 && (
-                          <span className="absolute top-3 right-3 chip bg-dorado-500 text-botella-950 text-xs font-black">
-                            ×{enCarrito} en pedido
-                          </span>
-                        )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4">
+              {filtrados.map(v => {
+                const enCarrito = cantidadEnCarrito(v.id)
+                return (
+                  <article
+                    key={v.id}
+                    className="group bg-botella-900/40 backdrop-blur-sm rounded-xl overflow-hidden border border-botella-700/40 hover:border-dorado-500/50 transition-all duration-200 hover:shadow-xl hover:shadow-dorado-500/10 flex flex-col"
+                  >
+                    <div className="aspect-[4/5] overflow-hidden bg-botella-950 relative">
+                      <img
+                        src={v.fotoUrl}
+                        alt={v.nombre}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-botella-950/80 via-transparent to-transparent" />
+                      {enCarrito > 0 && (
+                        <span className="absolute top-2 right-2 bg-dorado-500 text-botella-950 text-[10px] font-black px-2 py-0.5 rounded-full shadow">
+                          ×{enCarrito}
+                        </span>
+                      )}
+                      <div className="absolute bottom-0 inset-x-0 p-2.5">
+                        <p className="text-[9px] text-dorado-400 tracking-widest uppercase font-bold">{v.varietal}</p>
+                        <h3 className="font-black text-sm sm:text-base leading-tight line-clamp-2 text-white" style={{ fontFamily: 'Georgia, serif' }}>{v.nombre}</h3>
                       </div>
-                      <div className="p-5 flex-1 flex flex-col">
-                        <p className="text-[10px] text-dorado-400 tracking-widest uppercase font-bold mb-1">{v.varietal}</p>
-                        <h3 className="font-black text-lg leading-tight mb-1" style={{ fontFamily: 'Georgia, serif' }}>{v.nombre}</h3>
-                        <p className="text-xs text-botella-300 mb-3">{v.bodega}</p>
-                        {v.descripcion && (
-                          <p className="text-xs text-botella-200 leading-relaxed mb-3 line-clamp-3 flex-1">{v.descripcion}</p>
-                        )}
-                        <div className="pt-3 border-t border-botella-800/60">
-                          <div className="flex items-end justify-between mb-3">
-                            <div>
-                              <div className="text-[10px] text-botella-400 uppercase tracking-widest">Precio</div>
-                              <div className="text-2xl font-black text-dorado-300">${v.precioVenta.toLocaleString('es-AR')}</div>
-                            </div>
-                          </div>
-                          {enCarrito === 0 ? (
-                            <button
-                              onClick={() => agregar(v)}
-                              className="w-full px-4 py-2.5 rounded-xl bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-bold text-sm transition active:scale-[0.98]"
-                            >
-                              + Agregar al pedido
-                            </button>
-                          ) : (
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => cambiarCant(v.id, -1)}
-                                className="w-10 h-10 rounded-xl bg-botella-800 hover:bg-botella-700 border border-botella-600 text-white font-black text-lg transition active:scale-[0.95]"
-                              >−</button>
-                              <span className="flex-1 text-center text-lg font-black text-dorado-300">{enCarrito}</span>
-                              <button
-                                onClick={() => cambiarCant(v.id, 1)}
-                                className="w-10 h-10 rounded-xl bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black text-lg transition active:scale-[0.95]"
-                              >+</button>
-                            </div>
-                          )}
+                    </div>
+                    <div className="p-2.5 flex flex-col gap-2">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-lg sm:text-xl font-black text-dorado-300 leading-none">${v.precioVenta.toLocaleString('es-AR')}</span>
+                        <span className="text-[10px] text-botella-400 truncate ml-1">{v.bodega}</span>
+                      </div>
+                      {enCarrito === 0 ? (
+                        <button
+                          onClick={() => agregar(v)}
+                          className="w-full px-2 py-2 rounded-lg bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-bold text-xs sm:text-sm transition active:scale-[0.97]"
+                        >
+                          + Agregar
+                        </button>
+                      ) : (
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => cambiarCant(v.id, -1)}
+                            className="w-8 h-8 rounded-lg bg-botella-800 hover:bg-botella-700 border border-botella-600 text-white font-black text-base transition active:scale-[0.92]"
+                          >−</button>
+                          <span className="flex-1 text-center text-base font-black text-dorado-300">{enCarrito}</span>
+                          <button
+                            onClick={() => cambiarCant(v.id, 1)}
+                            className="w-8 h-8 rounded-lg bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black text-base transition active:scale-[0.92]"
+                          >+</button>
                         </div>
-                      </div>
-                    </article>
-                  )
-                })}
-              </div>
-            </>
+                      )}
+                    </div>
+                  </article>
+                )
+              })}
+            </div>
           )}
         </div>
       </section>

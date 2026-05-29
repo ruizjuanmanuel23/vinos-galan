@@ -79,20 +79,39 @@ export default function Landing() {
             y hoy sigue, con el mismo cariño, eligiendo botella por botella.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center max-w-xl mx-auto">
+          <div className="flex flex-col items-center gap-6 max-w-md mx-auto">
+            {/* CTA principal — Ver catálogo */}
             <Link
               to="/catalogo"
-              className="px-6 py-4 rounded-xl bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black text-base sm:text-lg shadow-2xl hover:shadow-dorado-500/40 transition active:scale-[0.98] flex-1"
+              className="group relative w-full overflow-hidden rounded-full bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black px-10 py-5 shadow-2xl hover:shadow-dorado-500/50 transition-all active:scale-[0.98]"
             >
-              🍷 Ver catálogo
+              <span className="relative z-10 flex items-center justify-center gap-3 text-base sm:text-lg tracking-wider uppercase">
+                Ver catálogo
+                <svg viewBox="0 0 24 24" className="w-5 h-5 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </span>
+              {/* Brillo sutil al hover */}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/30 to-transparent" />
             </Link>
+
+            {/* CTA secundario — Descargar app */}
             <a
               href="/vinos-galan.apk"
               download
               onClick={handleApk}
-              className="px-6 py-4 rounded-xl bg-botella-800/40 hover:bg-botella-700/50 border-2 border-botella-600 hover:border-dorado-400 text-white font-bold text-base sm:text-lg transition active:scale-[0.98] flex-1 backdrop-blur-sm"
+              className="group inline-flex items-center gap-2.5 text-botella-200 hover:text-dorado-300 transition text-sm font-semibold"
             >
-              📱 Descargar app
+              <span className="relative">
+                <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </span>
+              <span className="border-b border-dotted border-current pb-0.5">
+                o descargá la app para Android
+              </span>
             </a>
           </div>
 
