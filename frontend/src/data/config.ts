@@ -3,11 +3,11 @@
  * Cambiá estos valores cuando tengas los datos reales de Vinos Galán.
  */
 
-/** Número de WhatsApp en formato internacional para wa.me (sin + ni espacios). */
-export const WHATSAPP_NUM = '5492214567890'
+/** Número de WhatsApp de Nahuel García en formato internacional para wa.me. */
+export const WHATSAPP_NUM = '5492216384423'
 
 /** Teléfono visible para mostrar al cliente (con formato). */
-export const TELEFONO_VISIBLE = '(221) 456-7890'
+export const TELEFONO_VISIBLE = '(221) 638-4423'
 
 /** Email de contacto. */
 export const EMAIL = 'contacto@vinosgalanlaplata.com'

@@ -267,7 +267,7 @@ export default function PublicLayout() {
               <li>📍 Calle 45 entre 22 y 23</li>
               <li>📍 La Plata, Buenos Aires</li>
               <li>
-                <a href="tel:+542214567890" className="hover:text-white transition">📞 (221) 456-7890</a>
+                <a href="tel:+5492216384423" className="hover:text-white transition">📞 (221) 638-4423</a>
               </li>
             </ul>
           </div>

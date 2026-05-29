@@ -1,4 +1,5 @@
 import { IMG } from '../data/catalogoDestacado'
+import { WHATSAPP_NUM, TELEFONO_VISIBLE, EMAIL, DIRECCION, DIRECCION_CIUDAD, HORARIO, whatsappLink } from '../data/config'
 
 export default function Contacto() {
   return (
@@ -25,34 +26,34 @@ export default function Contacto() {
       <section className="py-12 sm:py-16 bg-botella-950">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-5">
           <a
-            href="https://wa.me/5492214567890?text=Hola%2C%20quer%C3%ADa%20consultar%20por%20Vinos%20Gal%C3%A1n"
+            href={whatsappLink('Hola, quería consultar por Vinos Galán')}
             target="_blank"
             rel="noreferrer"
             className="group bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-8 transition text-center"
           >
             <div className="text-5xl mb-3">💬</div>
             <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>WhatsApp</h3>
-            <p className="text-sm text-emerald-300 font-bold mb-2">(221) 456-7890</p>
-            <p className="text-xs text-botella-300">Pedidos y consultas rápidas</p>
+            <p className="text-sm text-emerald-300 font-bold mb-2">{TELEFONO_VISIBLE}</p>
+            <p className="text-xs text-botella-300">Nahuel García · Pedidos y consultas</p>
           </a>
 
           <a
-            href="tel:+542214567890"
+            href={`tel:+${WHATSAPP_NUM}`}
             className="group bg-botella-900/40 hover:bg-botella-800/60 border border-botella-700 hover:border-dorado-400 rounded-2xl p-8 transition text-center"
           >
             <div className="text-5xl mb-3">📞</div>
             <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>Teléfono</h3>
-            <p className="text-sm text-dorado-300 font-bold mb-2">(221) 456-7890</p>
+            <p className="text-sm text-dorado-300 font-bold mb-2">{TELEFONO_VISIBLE}</p>
             <p className="text-xs text-botella-300">Lunes a sábado, 9 a 20 hs.</p>
           </a>
 
           <a
-            href="mailto:contacto@vinosgalanlaplata.com"
+            href={`mailto:${EMAIL}`}
             className="group bg-botella-900/40 hover:bg-botella-800/60 border border-botella-700 hover:border-dorado-400 rounded-2xl p-8 transition text-center"
           >
             <div className="text-5xl mb-3">✉️</div>
             <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>Email</h3>
-            <p className="text-xs text-dorado-300 font-bold mb-2 break-all">contacto@vinosgalanlaplata.com</p>
+            <p className="text-xs text-dorado-300 font-bold mb-2 break-all">{EMAIL}</p>
             <p className="text-xs text-botella-300">Consultas mayoristas</p>
           </a>
         </div>
@@ -71,8 +72,8 @@ export default function Contacto() {
               <div className="flex gap-3">
                 <span className="text-dorado-400 text-xl shrink-0">📍</span>
                 <div>
-                  <p className="font-bold text-white">Calle 45 entre 22 y 23</p>
-                  <p className="text-sm">La Plata, Buenos Aires</p>
+                  <p className="font-bold text-white">{DIRECCION}</p>
+                  <p className="text-sm">{DIRECCION_CIUDAD}</p>
                 </div>
               </div>
 
@@ -80,8 +81,8 @@ export default function Contacto() {
                 <span className="text-dorado-400 text-xl shrink-0">🕐</span>
                 <div>
                   <p className="font-bold text-white">Horario de atención</p>
-                  <p className="text-sm">Lunes a viernes 9 a 13 hs. y 16 a 20 hs.</p>
-                  <p className="text-sm">Sábados 9 a 13 hs.</p>
+                  <p className="text-sm">{HORARIO.semana}</p>
+                  <p className="text-sm">{HORARIO.sabado}</p>
                 </div>
               </div>
 
