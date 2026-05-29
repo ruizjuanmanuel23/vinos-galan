@@ -54,7 +54,7 @@ export default function Landing() {
           {/* Botones grandes */}
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-xl mx-auto pt-4">
             <a
-              href="/app/vinos-galan.apk"
+              href="/vinos-galan.apk"
               download
               className="flex-1 group bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black rounded-2xl px-6 py-5 sm:py-6 transition shadow-2xl hover:shadow-dorado-500/30 active:scale-[0.98]"
             >
