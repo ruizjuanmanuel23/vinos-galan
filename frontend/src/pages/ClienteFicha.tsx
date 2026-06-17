@@ -1,14 +1,20 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import api from '../api/axios'
 import Modal from '../components/Modal'
 import { ClienteForm } from './Clientes'
-import { DIA_LABEL, type Cliente, type DiaSemana, type Venta, type DeudaAnotacion } from '../types'
+import {
+  DIA_LABEL, aplicarVariables, whatsappCliente,
+  type Cliente, type DiaSemana, type Venta, type DeudaAnotacion, type PlantillaWhatsApp,
+} from '../types'
 
 export default function ClienteFicha() {
   const { id } = useParams()
   const navigate = useNavigate()
   const [cliente, setCliente] = useState<Cliente | null>(null)
+  const [plantillas, setPlantillas] = useState<PlantillaWhatsApp[]>([])
+  const [menuPlantillas, setMenuPlantillas] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const [ventas, setVentas] = useState<Venta[]>([])
   const [deudas, setDeudas] = useState<DeudaAnotacion[]>([])
   const [tab, setTab] = useState<'ventas' | 'deudas'>('ventas')
@@ -32,6 +38,26 @@ export default function ClienteFicha() {
   }
 
   useEffect(() => { cargar() }, [id])
+  useEffect(() => {
+    api.get<PlantillaWhatsApp[]>('/plantillas').then(r => setPlantillas(r.data)).catch(() => {})
+  }, [])
+
+  // Cerrar dropdown al click afuera
+  useEffect(() => {
+    if (!menuPlantillas) return
+    const h = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuPlantillas(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [menuPlantillas])
+
+  const abrirWhatsApp = (plantilla?: PlantillaWhatsApp) => {
+    if (!cliente?.telefono) return
+    const msg = plantilla ? aplicarVariables(plantilla.texto, cliente) : undefined
+    window.open(whatsappCliente(cliente.telefono, msg), '_blank')
+    setMenuPlantillas(false)
+  }
 
   const guardarCliente = async () => {
     await api.put(`/clientes/${id}`, { ...formCliente, diaReparto: formCliente.diaReparto || null, zona: formCliente.zona || null })
@@ -85,13 +111,82 @@ export default function ClienteFicha() {
             <h2 className="text-xs font-bold uppercase tracking-wide text-gray-500 mb-3">Datos de contacto</h2>
             <div className="space-y-2.5 text-sm">
               {cliente.telefono && (
-                <a href={`tel:${cliente.telefono}`} className="block">
-                  <p className="text-[10px] text-gray-500 uppercase">Teléfono</p>
-                  <p className="font-semibold text-botella-700">📞 {cliente.telefono}</p>
-                </a>
+                <div>
+                  <p className="text-[10px] text-gray-500 uppercase mb-1.5">Teléfono</p>
+                  <p className="font-semibold text-gray-900 mb-2">{cliente.telefono}</p>
+                  {/* Botones de contacto */}
+                  <div className="grid grid-cols-2 gap-2">
+                    {/* WhatsApp con dropdown de plantillas */}
+                    <div className="relative" ref={menuRef}>
+                      <button
+                        onClick={() => {
+                          if (plantillas.length === 0) abrirWhatsApp()
+                          else if (plantillas.length === 1) abrirWhatsApp(plantillas[0])
+                          else setMenuPlantillas(o => !o)
+                        }}
+                        className="w-full flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold rounded-lg px-3 py-2.5 text-sm transition shadow"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                          <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.7-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2 1 2.4.1.2 1.7 2.5 4 3.5.6.2 1 .4 1.4.5.6.2 1.1.2 1.5.1.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1-.1-.1-.3-.1-.6-.2zm-5.4 7.2h0c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4c-1-1.6-1.5-3.4-1.5-5.2 0-5.5 4.5-10 10-10 2.7 0 5.2 1 7.1 2.9 1.9 1.9 2.9 4.4 2.9 7.1 0 5.5-4.5 9.8-10.2 9.8zM20.5 3.5C18.2 1.3 15.2 0 12.1 0 5.5 0 .1 5.4.1 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4h0c6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.4-8.3z" />
+                        </svg>
+                        WhatsApp
+                      </button>
+
+                      {/* Dropdown plantillas */}
+                      {menuPlantillas && plantillas.length > 1 && (
+                        <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl z-20 overflow-hidden">
+                          <div className="px-3 py-2 text-[10px] uppercase tracking-wide font-bold text-gray-500 bg-gray-50 border-b border-gray-100">
+                            Elegí mensaje
+                          </div>
+                          <button
+                            onClick={() => abrirWhatsApp()}
+                            className="w-full text-left px-3 py-2 hover:bg-gray-50 transition border-b border-gray-100 text-xs"
+                          >
+                            <span className="text-gray-500">Sin mensaje (chat vacío)</span>
+                          </button>
+                          {plantillas.map(p => (
+                            <button
+                              key={p.id}
+                              onClick={() => abrirWhatsApp(p)}
+                              className="w-full text-left px-3 py-2 hover:bg-emerald-50 transition border-b border-gray-100 last:border-0"
+                            >
+                              <div className="flex items-center gap-1.5">
+                                {p.esDefault && <span className="text-dorado-500 text-xs">⭐</span>}
+                                <span className="font-bold text-sm text-gray-900">{p.nombre}</span>
+                              </div>
+                              <p className="text-[11px] text-gray-500 truncate mt-0.5">{p.texto}</p>
+                            </button>
+                          ))}
+                          <Link
+                            to="/app/configuracion"
+                            className="block px-3 py-2 text-center text-[11px] text-botella-700 hover:bg-botella-50 font-semibold border-t border-gray-100"
+                          >
+                            ⚙ Editar plantillas
+                          </Link>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Llamar */}
+                    <a
+                      href={`tel:${cliente.telefono}`}
+                      className="flex items-center justify-center gap-1.5 bg-botella-700 hover:bg-botella-800 active:bg-botella-800 text-white font-bold rounded-lg px-3 py-2.5 text-sm transition shadow"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                      </svg>
+                      Llamar
+                    </a>
+                  </div>
+                  {plantillas.length === 0 && (
+                    <Link to="/app/configuracion" className="block mt-2 text-[11px] text-botella-700 hover:underline text-center">
+                      ⚙ Configurá plantillas de mensaje
+                    </Link>
+                  )}
+                </div>
               )}
               {cliente.direccion && (
-                <div>
+                <div className="pt-2 border-t border-gray-100">
                   <p className="text-[10px] text-gray-500 uppercase">Dirección</p>
                   <p className="font-semibold text-gray-900">
                     {dirGoogle ? (
@@ -101,7 +196,7 @@ export default function ClienteFicha() {
                 </div>
               )}
               {cliente.notas && (
-                <div>
+                <div className="pt-2 border-t border-gray-100">
                   <p className="text-[10px] text-gray-500 uppercase">Notas</p>
                   <p className="text-gray-700 italic text-sm">{cliente.notas}</p>
                 </div>

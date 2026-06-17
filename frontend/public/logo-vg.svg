@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" role="img" aria-label="Vinos Galán">
+  <defs>
+    <radialGradient id="bgGrad" cx="50%" cy="40%" r="70%">
+      <stop offset="0%"  stop-color="#3f854f"/>
+      <stop offset="60%" stop-color="#22432b"/>
+      <stop offset="100%" stop-color="#0d1f13"/>
+    </radialGradient>
+    <linearGradient id="bodyGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#f3f3ef"/>
+      <stop offset="100%" stop-color="#d8d4c7"/>
+    </linearGradient>
+    <linearGradient id="vgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#f3cc4d"/>
+      <stop offset="100%" stop-color="#bd7c10"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Fondo circular verde botella con anillo dorado -->
+  <circle cx="110" cy="110" r="104" fill="url(#bgGrad)"/>
+  <circle cx="110" cy="110" r="104" fill="none" stroke="#dca015" stroke-width="2.5" opacity="0.85"/>
+  <circle cx="110" cy="110" r="98"  fill="none" stroke="#f3cc4d" stroke-width="0.8" opacity="0.5"/>
+
+  <!-- "VINOS GALAN" arco arriba (texto en circulo) -->
+  <path id="arcTop" d="M 30,110 A 80,80 0 0 1 190,110" fill="none"/>
+  <text font-family="Georgia, serif" font-size="13" font-weight="700" fill="#f3cc4d" letter-spacing="3">
+    <textPath href="#arcTop" startOffset="50%" text-anchor="middle">VINOS · GALÁN</textPath>
+  </text>
+
+  <!-- Iniciales VG grandes (corazón del logo) -->
+  <text x="110" y="98"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="60" font-weight="900"
+        fill="url(#vgGrad)" text-anchor="middle"
+        stroke="#6a3b17" stroke-width="0.8" paint-order="stroke">VG</text>
+
+  <!-- Camioneta blanca tipo Renault Master vista de perfil -->
+  <!-- agrupada y centrada en (110, 158) -->
+  <g transform="translate(45, 130)">
+    <!-- Sombra bajo el camión -->
+    <ellipse cx="65" cy="44" rx="58" ry="3.5" fill="#000" opacity="0.4"/>
+
+    <!-- Caja de carga trasera (alto) -->
+    <path d="M 4 12
+             Q 4 8 8 8
+             L 70 8
+             L 70 38
+             L 4 38
+             Z"
+          fill="url(#bodyGrad)" stroke="#666" stroke-width="0.6"/>
+
+    <!-- Cabina (con parabrisas inclinado y capó corto adelante) -->
+    <path d="M 70 8
+             L 105 12
+             Q 113 14 116 22
+             L 122 32
+             Q 124 36 124 38
+             L 70 38
+             Z"
+          fill="url(#bodyGrad)" stroke="#666" stroke-width="0.6"/>
+
+    <!-- Línea separadora cabina/caja (puerta) -->
+    <line x1="70" y1="8" x2="70" y2="38" stroke="#999" stroke-width="0.7"/>
+
+    <!-- Puerta lateral caja (líneas verticales) -->
+    <line x1="22" y1="14" x2="22" y2="38" stroke="#999" stroke-width="0.5"/>
+    <line x1="46" y1="14" x2="46" y2="38" stroke="#999" stroke-width="0.5"/>
+
+    <!-- Ventana grande de la caja (ventanilla lateral) -->
+    <rect x="26" y="13" width="40" height="11" rx="1.5"
+          fill="#22432b" stroke="#0d1f13" stroke-width="0.5" opacity="0.85"/>
+
+    <!-- Parabrisas + ventana cabina -->
+    <path d="M 75 13
+             L 100 14
+             Q 107 15 110 21
+             L 114 28
+             L 75 28 Z"
+          fill="#22432b" stroke="#0d1f13" stroke-width="0.5" opacity="0.85"/>
+
+    <!-- Marco cabina/parabrisas -->
+    <line x1="75" y1="13" x2="75" y2="28" stroke="#fff" stroke-width="0.4"/>
+
+    <!-- Espejo retrovisor -->
+    <rect x="118" y="18" width="3" height="6" rx="0.5" fill="#666"/>
+
+    <!-- Faro delantero -->
+    <ellipse cx="120" cy="32" rx="2.5" ry="2.5" fill="#fff3c0" stroke="#bd7c10" stroke-width="0.4"/>
+
+    <!-- Guiño naranja al costado del faro -->
+    <rect x="116" y="34" width="3" height="2" rx="0.4" fill="#f29200"/>
+
+    <!-- Rueda delantera -->
+    <circle cx="100" cy="42" r="7" fill="#1a1a1a"/>
+    <circle cx="100" cy="42" r="4" fill="#444"/>
+    <circle cx="100" cy="42" r="1.5" fill="#888"/>
+
+    <!-- Rueda trasera -->
+    <circle cx="20"  cy="42" r="7" fill="#1a1a1a"/>
+    <circle cx="20"  cy="42" r="4" fill="#444"/>
+    <circle cx="20"  cy="42" r="1.5" fill="#888"/>
+
+    <!-- Pequeño detalle: línea de cintura -->
+    <line x1="4" y1="30" x2="115" y2="32" stroke="#999" stroke-width="0.4" opacity="0.6"/>
+  </g>
+
+  <!-- Año 1942 chico abajo del todo -->
+  <path id="arcBot" d="M 40,150 A 80,80 0 0 0 180,150" fill="none"/>
+  <text font-family="Georgia, serif" font-size="9" font-weight="700" fill="#f3cc4d" letter-spacing="4" opacity="0.9">
+    <textPath href="#arcBot" startOffset="50%" text-anchor="middle">EST. 1942 · LA PLATA</textPath>
+  </text>
+</svg>

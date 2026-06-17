@@ -144,6 +144,49 @@ export function cantidadDeParada(p: Parada): number {
   return p.cantidadProductos || 0
 }
 
+/**
+ * Plantilla de mensaje WhatsApp.
+ * El texto puede usar variables: {nombre}, {direccion}, {zona}, {dia}, {dia_hoy}, {hora}
+ */
+export interface PlantillaWhatsApp {
+  id: number
+  nombre: string         // Ej: "Pedido del día"
+  texto: string          // Ej: "Hola {nombre}, ¿qué necesitás para hoy?"
+  /** Si es la plantilla por defecto (botón rápido). Solo una a la vez. */
+  esDefault: boolean
+  creadoEn: string
+}
+
+/** Reemplaza las variables del texto con los datos del cliente. */
+export function aplicarVariables(texto: string, cliente: Cliente): string {
+  const hoy = new Date()
+  const dias = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado']
+  const diaSemana = dias[hoy.getDay()]
+  const hora = hoy.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+  return texto
+    .replace(/\{nombre\}/gi,    cliente.nombre || '')
+    .replace(/\{direccion\}/gi, cliente.direccion || '')
+    .replace(/\{zona\}/gi,      cliente.zona || '')
+    .replace(/\{dia\}/gi,       cliente.diaReparto ? DIA_LABEL[cliente.diaReparto].toLowerCase() : '')
+    .replace(/\{dia_hoy\}/gi,   diaSemana)
+    .replace(/\{hora\}/gi,      hora)
+}
+
+/** Construye el link wa.me al teléfono del cliente (distinto del WhatsApp de Galán). */
+export function whatsappCliente(telefono: string, mensaje?: string): string {
+  // Limpiar teléfono: solo dígitos
+  const tel = (telefono || '').replace(/\D/g, '')
+  // Si no empieza con 549 (argentina) y tiene 10 dígitos (área + número), prependemos
+  let final = tel
+  if (tel.length >= 8 && !tel.startsWith('549') && !tel.startsWith('54')) {
+    final = '549' + tel
+  } else if (tel.startsWith('54') && !tel.startsWith('549')) {
+    final = '549' + tel.slice(2)
+  }
+  const url = `https://wa.me/${final}`
+  return mensaje ? `${url}?text=${encodeURIComponent(mensaje)}` : url
+}
+
 export function diaSemanaHoy(): DiaSemana {
   const idx = new Date().getDay() // 0=domingo
   return ['DOMINGO','LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO'][idx] as DiaSemana

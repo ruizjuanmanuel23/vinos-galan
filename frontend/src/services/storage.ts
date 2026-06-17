@@ -8,7 +8,7 @@
 
 import type {
   Cliente, Vino, Venta, DetalleVenta, DeudaAnotacion,
-  Viaje, Parada, ItemParada, DiaSemana,
+  Viaje, Parada, ItemParada, DiaSemana, PlantillaWhatsApp,
 } from '../types'
 import { cargaDeCamion } from '../types'
 
@@ -21,6 +21,7 @@ const K = {
   ventas:   'vg.ventas',
   deudas:   'vg.deudas',
   viajes:   'vg.viajes',
+  plantillas: 'vg.plantillas', // Plantillas WhatsApp
   counter:  'vg.counter',  // Contador para IDs únicos
 } as const
 
@@ -449,6 +450,50 @@ export const viajesAPI = {
 }
 
 // ============================================================
+// PLANTILLAS WHATSAPP
+// ============================================================
+export const plantillasAPI = {
+  listAll(): PlantillaWhatsApp[] {
+    return load<PlantillaWhatsApp>(K.plantillas)
+  },
+  byId(id: number): PlantillaWhatsApp | null {
+    return load<PlantillaWhatsApp>(K.plantillas).find(p => p.id === id) ?? null
+  },
+  getDefault(): PlantillaWhatsApp | null {
+    const list = load<PlantillaWhatsApp>(K.plantillas)
+    return list.find(p => p.esDefault) ?? list[0] ?? null
+  },
+  create(data: Partial<PlantillaWhatsApp>): PlantillaWhatsApp {
+    const list = load<PlantillaWhatsApp>(K.plantillas)
+    const nueva: PlantillaWhatsApp = {
+      id: nextId(),
+      nombre: data.nombre ?? 'Sin nombre',
+      texto: data.texto ?? '',
+      esDefault: !!data.esDefault,
+      creadoEn: nowISO(),
+    }
+    // Si se marca como default, desmarcar las otras
+    if (nueva.esDefault) list.forEach(p => p.esDefault = false)
+    list.push(nueva)
+    save(K.plantillas, list)
+    return nueva
+  },
+  update(id: number, data: Partial<PlantillaWhatsApp>): PlantillaWhatsApp | null {
+    const list = load<PlantillaWhatsApp>(K.plantillas)
+    const idx = list.findIndex(p => p.id === id)
+    if (idx === -1) return null
+    // Si se marca como default, desmarcar otras
+    if (data.esDefault) list.forEach(p => p.esDefault = false)
+    list[idx] = { ...list[idx], ...data, id }
+    save(K.plantillas, list)
+    return list[idx]
+  },
+  delete(id: number): void {
+    save(K.plantillas, load<PlantillaWhatsApp>(K.plantillas).filter(p => p.id !== id))
+  },
+}
+
+// ============================================================
 // ROUTER: matchea URLs del estilo backend y devuelve datos.
 // Usado por src/api/axios.ts para que las páginas no cambien.
 // ============================================================
@@ -554,6 +599,17 @@ export async function handleRequest(
     if (M === 'DELETE') { viajesAPI.delete(id); return null }
   }
 
+  // PLANTILLAS WHATSAPP
+  if (M === 'GET' && P === '/plantillas') return plantillasAPI.listAll()
+  if (M === 'POST' && P === '/plantillas') return plantillasAPI.create(body)
+  m = P.match(/^\/plantillas\/(\d+)$/)
+  if (m) {
+    const id = Number(m[1])
+    if (M === 'GET')    return plantillasAPI.byId(id)
+    if (M === 'PUT')    return plantillasAPI.update(id, body)
+    if (M === 'DELETE') { plantillasAPI.delete(id); return null }
+  }
+
   throw new Error(`Ruta no manejada: ${method} ${url}`)
 }
 
@@ -561,6 +617,23 @@ export async function handleRequest(
 // SEED: si el localStorage está vacío, carga datos de ejemplo
 // ============================================================
 export function seedIfEmpty(): void {
+  // Seed de plantillas si no hay ninguna
+  if (load<PlantillaWhatsApp>(K.plantillas).length === 0) {
+    plantillasAPI.create({
+      nombre: 'Pedido del día',
+      texto: 'Hola {nombre}! Te habla Vinos Galán 🍷\n\n¿Necesitás algo para el {dia_hoy}? Hoy estamos repartiendo y queríamos saber si te llevamos algo.',
+      esDefault: true,
+    })
+    plantillasAPI.create({
+      nombre: 'En camino',
+      texto: 'Hola {nombre}! Estamos en camino para tu zona ({zona}). Llegamos en un rato 🚚',
+    })
+    plantillasAPI.create({
+      nombre: 'Saludo simple',
+      texto: 'Hola {nombre}! ¿Cómo estás?',
+    })
+  }
+
   if (load<Cliente>(K.clientes).length > 0) return
   const c1 = clientesAPI.create({ nombre: 'Bar La Esquina',     telefono: '1144556677', direccion: 'San Martín 100',     zona: 'Centro', diaReparto: 'MARTES' })
   const c2 = clientesAPI.create({ nombre: 'Restaurante El Pino', telefono: '1145678900', direccion: 'Av. Corrientes 1234', zona: 'Centro', diaReparto: 'JUEVES' })

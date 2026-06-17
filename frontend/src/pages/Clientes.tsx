@@ -2,12 +2,16 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/axios'
 import Modal from '../components/Modal'
-import { DIAS_SEMANA, DIA_LABEL, type Cliente, type DiaSemana } from '../types'
+import {
+  DIAS_SEMANA, DIA_LABEL, aplicarVariables, whatsappCliente,
+  type Cliente, type DiaSemana, type PlantillaWhatsApp,
+} from '../types'
 
 const EMPTY = { nombre: '', telefono: '', direccion: '', zona: '', diaReparto: '' as '' | DiaSemana, notas: '' }
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([])
+  const [plantillaDefault, setPlantillaDefault] = useState<PlantillaWhatsApp | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtroDia, setFiltroDia] = useState<'TODOS' | DiaSemana>('TODOS')
   const [show, setShow] = useState(false)
@@ -15,6 +19,20 @@ export default function Clientes() {
 
   const cargar = () => api.get<Cliente[]>('/clientes').then(r => setClientes(r.data)).catch(() => {})
   useEffect(() => { cargar() }, [])
+  useEffect(() => {
+    api.get<PlantillaWhatsApp[]>('/plantillas').then(r => {
+      const def = r.data.find(p => p.esDefault) ?? r.data[0] ?? null
+      setPlantillaDefault(def)
+    }).catch(() => {})
+  }, [])
+
+  const abrirWhatsApp = (c: Cliente, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!c.telefono) return
+    const msg = plantillaDefault ? aplicarVariables(plantillaDefault.texto, c) : undefined
+    window.open(whatsappCliente(c.telefono, msg), '_blank')
+  }
 
   const filtrados = useMemo(() => {
     let list = clientes
@@ -61,8 +79,8 @@ export default function Clientes() {
       <div className="lg:hidden space-y-2">
         {filtrados.length === 0 && <p className="text-center text-sm text-gray-400 py-8">Sin clientes para mostrar.</p>}
         {filtrados.map(c => (
-          <Link key={c.id} to={`/app/clientes/${c.id}`} className="block card p-3 active:bg-gray-50">
-            <div className="flex items-start justify-between gap-2">
+          <div key={c.id} className="card p-3 flex items-center gap-2">
+            <Link to={`/app/clientes/${c.id}`} className="flex items-start justify-between gap-2 flex-1 min-w-0 active:opacity-70">
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-gray-900 truncate">{c.nombre}</p>
                 {c.telefono && <p className="text-xs text-gray-500 mt-0.5">📞 {c.telefono}</p>}
@@ -72,8 +90,19 @@ export default function Clientes() {
                 {c.diaReparto && <span className="chip bg-botella-100 text-botella-700">{DIA_LABEL[c.diaReparto].slice(0, 3)}</span>}
                 {c.zona && <span className="chip bg-dorado-100 text-dorado-800">{c.zona}</span>}
               </div>
-            </div>
-          </Link>
+            </Link>
+            {c.telefono && (
+              <button
+                onClick={e => abrirWhatsApp(c, e)}
+                title="Mandar mensaje por WhatsApp"
+                className="w-10 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white flex items-center justify-center shrink-0 transition shadow"
+              >
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
+                  <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.7-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2 1 2.4.1.2 1.7 2.5 4 3.5.6.2 1 .4 1.4.5.6.2 1.1.2 1.5.1.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1-.1-.1-.3-.1-.6-.2zm-5.4 7.2h0c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4c-1-1.6-1.5-3.4-1.5-5.2 0-5.5 4.5-10 10-10 2.7 0 5.2 1 7.1 2.9 1.9 1.9 2.9 4.4 2.9 7.1 0 5.5-4.5 9.8-10.2 9.8zM20.5 3.5C18.2 1.3 15.2 0 12.1 0 5.5 0 .1 5.4.1 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4h0c6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.4-8.3z" />
+                </svg>
+              </button>
+            )}
+          </div>
         ))}
       </div>
 
@@ -106,7 +135,20 @@ export default function Clientes() {
                   {c.diaReparto ? <span className="chip bg-botella-100 text-botella-800">{DIA_LABEL[c.diaReparto]}</span> : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3 text-right">
-                  <Link to={`/app/clientes/${c.id}`} className="text-botella-700 font-semibold hover:underline">Ficha →</Link>
+                  <div className="flex items-center justify-end gap-2">
+                    {c.telefono && (
+                      <button
+                        onClick={e => abrirWhatsApp(c, e)}
+                        title="Mensaje por WhatsApp"
+                        className="w-8 h-8 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+                          <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.7-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2 1 2.4.1.2 1.7 2.5 4 3.5.6.2 1 .4 1.4.5.6.2 1.1.2 1.5.1.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1-.1-.1-.3-.1-.6-.2zm-5.4 7.2h0c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4c-1-1.6-1.5-3.4-1.5-5.2 0-5.5 4.5-10 10-10 2.7 0 5.2 1 7.1 2.9 1.9 1.9 2.9 4.4 2.9 7.1 0 5.5-4.5 9.8-10.2 9.8zM20.5 3.5C18.2 1.3 15.2 0 12.1 0 5.5 0 .1 5.4.1 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4h0c6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.4-8.3z" />
+                        </svg>
+                      </button>
+                    )}
+                    <Link to={`/app/clientes/${c.id}`} className="text-botella-700 font-semibold hover:underline">Ficha →</Link>
+                  </div>
                 </td>
               </tr>
             ))}
