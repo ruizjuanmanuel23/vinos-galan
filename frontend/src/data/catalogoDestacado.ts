@@ -20,7 +20,7 @@ export const CATALOGO_DESTACADO: VinoDestacado[] = [
     bodega: 'Bodega Galán',
     varietal: 'Malbec',
     precioVenta: 5500,
-    fotoUrl: 'https://images.unsplash.com/photo-1568213816046-0ee1c42bd559?auto=format&fit=crop&w=600&q=80',
+    fotoUrl: 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?auto=format&fit=crop&w=600&q=80',
     descripcion: 'Tinto frutado con notas de ciruela y violeta. Crianza en roble francés. El emblema de la casa.'
   },
   {
@@ -36,7 +36,7 @@ export const CATALOGO_DESTACADO: VinoDestacado[] = [
     bodega: 'Bodega Galán',
     varietal: 'Bonarda',
     precioVenta: 4200,
-    fotoUrl: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=600&q=80',
+    fotoUrl: 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?auto=format&fit=crop&w=600&q=80',
     descripcion: 'Joven, jugoso y muy fácil de beber. La cepa más argentina, con frutos rojos en boca.'
   },
   {
@@ -68,7 +68,7 @@ export const CATALOGO_DESTACADO: VinoDestacado[] = [
     bodega: 'Bodega Galán',
     varietal: 'Chardonnay',
     precioVenta: 5100,
-    fotoUrl: 'https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=600&q=80&blend=DCC85D&blend-mode=multiply&blend-alpha=10',
+    fotoUrl: 'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?auto=format&fit=crop&w=600&q=80&blend=DCC85D&blend-mode=multiply&blend-alpha=10',
     descripcion: 'Blanco seco con paso por barrica. Manzana, vainilla y miel. Cuerpo y elegancia.'
   },
   {
@@ -86,8 +86,8 @@ export const IMG = {
   heroVineyard: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1920&q=80',
   heroBarrels:  'https://images.unsplash.com/photo-1543007631-283050bb3e8c?auto=format&fit=crop&w=1920&q=80',
   heroPour:     'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=1920&q=80',
-  glassRed:     'https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=1200&q=80',
-  bottles:      'https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?auto=format&fit=crop&w=1200&q=80',
+  glassRed:     'https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=1200&q=80',
+  bottles:      'https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=1200&q=80',
   cellar:       'https://images.unsplash.com/photo-1543007631-283050bb3e8c?auto=format&fit=crop&w=1200&q=80',
   grapes:       'https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=1200&q=80',
   vineyardSunset: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=1920&q=80',
@@ -95,4 +95,8 @@ export const IMG = {
   delivery: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
   vineyardRows: 'https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=800&q=80',
   toast: 'https://images.unsplash.com/photo-1527271982979-83fea3eb3582?auto=format&fit=crop&w=800&q=80',
+  // Imagen "histórica" — bodega antigua con barricas (se le aplica filtro sepia para look 1942)
+  historicalCellar: 'https://images.unsplash.com/photo-1543007631-283050bb3e8c?auto=format&fit=crop&w=900&q=80',
+  // Imagen flashera para sección "App móvil" — mano con celular en ambiente de vino
+  phoneWine: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=900&q=80',
 }

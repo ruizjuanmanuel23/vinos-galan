@@ -156,8 +156,20 @@ export default function Landing() {
       <section className="relative py-24 bg-botella-950">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="relative">
-            <div className="aspect-[4/5] rounded-2xl overflow-hidden ring-1 ring-dorado-500/20 shadow-2xl">
-              <img src={IMG.cellar} alt="Bodega" className="w-full h-full object-cover" />
+            <div className="aspect-[4/5] rounded-2xl overflow-hidden ring-1 ring-dorado-500/30 shadow-2xl bg-botella-950">
+              <img
+                src={IMG.historicalCellar}
+                alt="Bodega histórica de Vinos Galán"
+                className="w-full h-full object-cover"
+                style={{ filter: 'sepia(0.55) saturate(1.3) contrast(0.95) brightness(0.92)' }}
+              />
+              {/* Viñeta vintage para acentuar el look histórico */}
+              <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 80px rgba(20,15,5,0.5)' }} />
+              {/* Cinta inferior con dato histórico */}
+              <div className="absolute bottom-4 left-4 right-4 bg-botella-950/70 backdrop-blur-sm border border-dorado-500/30 rounded-lg px-3 py-2">
+                <p className="text-[9px] uppercase tracking-[0.2em] text-dorado-300 font-bold">Bodega original</p>
+                <p className="text-xs text-botella-100 mt-0.5">Calle 45 entre 22 y 23 · La Plata</p>
+              </div>
             </div>
             <div className="absolute -bottom-6 -right-6 bg-dorado-500 text-botella-950 px-6 py-4 rounded-xl shadow-2xl">
               <div className="text-4xl font-black leading-none" style={{ fontFamily: 'Georgia, serif' }}>1942</div>
@@ -336,13 +348,26 @@ export default function Landing() {
           </div>
 
           <div className="relative">
-            <div className="aspect-[3/4] rounded-3xl overflow-hidden ring-1 ring-dorado-500/30 shadow-2xl">
-              <img src={IMG.heroPour} alt="App" className="w-full h-full object-cover" />
+            <div className="aspect-[3/4] rounded-3xl overflow-hidden ring-1 ring-dorado-500/30 shadow-2xl bg-botella-950">
+              <img src={IMG.phoneWine} alt="App móvil de Vinos Galán" className="w-full h-full object-cover" />
+              {/* Overlay sutil de color para integrarla a la paleta */}
+              <div className="absolute inset-0 bg-gradient-to-tr from-botella-950/40 via-transparent to-dorado-500/10 mix-blend-overlay pointer-events-none" />
             </div>
             <div className="absolute -top-4 -left-4 bg-botella-900 border border-dorado-500/50 px-4 py-2 rounded-xl shadow-2xl">
               <div className="flex items-center gap-2 text-sm font-bold">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                 Disponible ahora
+              </div>
+            </div>
+            {/* Mini badge inferior con número de descargas / disponibilidad */}
+            <div className="absolute -bottom-4 -right-4 bg-dorado-500 text-botella-950 px-4 py-2 rounded-xl shadow-2xl">
+              <div className="flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span className="font-black text-sm">APK lista</span>
               </div>
             </div>
           </div>
