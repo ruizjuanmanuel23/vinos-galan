@@ -158,18 +158,13 @@ export default function Landing() {
           <div className="relative">
             <div className="aspect-[4/5] rounded-2xl overflow-hidden ring-1 ring-dorado-500/30 shadow-2xl bg-botella-950">
               <img
-                src={IMG.historicalCellar}
-                alt="Bodega histórica de Vinos Galán"
+                src={IMG.vineyardSunset}
+                alt="Tradición vitivinícola"
                 className="w-full h-full object-cover"
-                style={{ filter: 'sepia(0.55) saturate(1.3) contrast(0.95) brightness(0.92)' }}
+                style={{ filter: 'sepia(0.45) saturate(1.2) contrast(0.95) brightness(0.92)' }}
               />
-              {/* Viñeta vintage para acentuar el look histórico */}
-              <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 80px rgba(20,15,5,0.5)' }} />
-              {/* Cinta inferior con dato histórico */}
-              <div className="absolute bottom-4 left-4 right-4 bg-botella-950/70 backdrop-blur-sm border border-dorado-500/30 rounded-lg px-3 py-2">
-                <p className="text-[9px] uppercase tracking-[0.2em] text-dorado-300 font-bold">Bodega original</p>
-                <p className="text-xs text-botella-100 mt-0.5">Calle 45 entre 22 y 23 · La Plata</p>
-              </div>
+              {/* Viñeta vintage para acentuar el look */}
+              <div className="absolute inset-0 pointer-events-none" style={{ boxShadow: 'inset 0 0 80px rgba(20,15,5,0.4)' }} />
             </div>
             <div className="absolute -bottom-6 -right-6 bg-dorado-500 text-botella-950 px-6 py-4 rounded-xl shadow-2xl">
               <div className="text-4xl font-black leading-none" style={{ fontFamily: 'Georgia, serif' }}>1942</div>
