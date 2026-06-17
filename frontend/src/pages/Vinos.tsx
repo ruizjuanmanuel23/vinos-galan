@@ -90,10 +90,10 @@ export default function Vinos() {
     <div className="space-y-4 sm:space-y-5">
       <div className="flex items-start sm:items-end justify-between gap-2 flex-wrap">
         <div>
-          <h1 className="page-title">Stock de vinos</h1>
-          <p className="page-subtitle">{visibles.length} vino{visibles.length !== 1 ? 's' : ''} · {totalStock} unidades</p>
+          <h1 className="page-title">Bodega</h1>
+          <p className="page-subtitle">{visibles.length} producto{visibles.length !== 1 ? 's' : ''} · {totalStock} unidades en stock</p>
         </div>
-        <button onClick={abrirNuevo} className="btn-primary">+ Nuevo vino</button>
+        <button onClick={abrirNuevo} className="btn-primary">+ Nuevo producto</button>
       </div>
 
       <div className="space-y-3">

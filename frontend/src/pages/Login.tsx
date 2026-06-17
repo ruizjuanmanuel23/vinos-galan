@@ -33,9 +33,7 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center gap-3 group">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-botella-600 to-botella-800 ring-2 ring-dorado-400/50 flex items-center justify-center shadow-2xl group-hover:scale-105 transition-transform">
-              <span className="text-dorado-300 font-black text-2xl leading-none" style={{ fontFamily: 'Georgia, serif' }}>VG</span>
-            </div>
+            <img src="/logo-vg.png" alt="Vinos Galán" className="w-28 h-28 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform" />
             <div className="leading-tight">
               <div className="font-black tracking-wide text-white text-lg">VINOS GALAN</div>
               <div className="text-[10px] text-dorado-300 tracking-[0.25em] uppercase">La Plata · 1942</div>

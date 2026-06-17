@@ -60,10 +60,17 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-r from-botella-950/60 via-transparent to-transparent" />
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-24">
-          {/* Badge */}
+          {/* Logo grande */}
+          <img
+            src="/logo-vg.png"
+            alt="Vinos Galán"
+            className="w-40 h-40 sm:w-52 sm:h-52 object-contain mx-auto mb-6 drop-shadow-2xl"
+          />
+
+          {/* Badge con bandera */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-dorado-500/15 border border-dorado-500/30 mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-dorado-400 animate-pulse" />
-            <span className="text-xs font-semibold text-dorado-300 tracking-[0.25em] uppercase">Desde 1942 · La Plata</span>
+            <span className="text-xs font-semibold text-dorado-300 tracking-[0.25em] uppercase">🇦🇷 Desde 1942 · La Plata</span>
           </div>
 
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight mb-4 leading-none" style={{ fontFamily: 'Georgia, serif' }}>

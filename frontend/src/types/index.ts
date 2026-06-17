@@ -68,6 +68,15 @@ export interface DeudaAnotacion {
 export type EstadoViaje = 'EN_CURSO' | 'FINALIZADO'
 export type EstadoParada = 'PENDIENTE' | 'VISITADA' | 'OMITIDA'
 
+/** Item de una parada: producto + cantidad que va para ese cliente. */
+export interface ItemParada {
+  id: number
+  vinoId: number
+  /** Snapshot del nombre del producto (por si se modifica/borra después). */
+  vinoNombre: string
+  cantidad: number
+}
+
 export interface Parada {
   id: number
   cliente: Cliente
@@ -75,7 +84,9 @@ export interface Parada {
   estado: EstadoParada
   notas: string | null
   horaVisita: string | null
-  /** Cantidad de unidades/cajas a llevarle a este cliente. Default 0. */
+  /** Detalle de productos a llevarle (vinos, jugos, etc. de la Bodega). */
+  items: ItemParada[]
+  /** Cantidad total de unidades de esta parada. Suma derivada (compat). */
   cantidadProductos: number
 }
 
@@ -90,16 +101,47 @@ export interface Viaje {
   paradas: Parada[]
   /**
    * Si está seteado (>0), es la cantidad total cargada a mano para todo el viaje
-   * (ignora la suma de las paradas). Útil para cargar rápido sin desglosar por cliente.
-   * Si es null/undefined o 0, el total del viaje se calcula sumando las paradas.
+   * (sin desglose). Útil para registrar rápido sin detallar producto por cliente.
    */
   cantidadTotalManual?: number | null
+  /** Si la camioneta ya fue cargada (stock descontado de Bodega). */
+  cargado?: boolean
+  /** Cuándo se cargó el camión. */
+  fechaCarga?: string | null
+}
+
+/** Producto + cantidad agregada (resumen para cargar el camión). */
+export interface ItemCarga {
+  vinoId: number
+  vinoNombre: string
+  cantidad: number
+}
+
+/** Devuelve los productos agregados de todo el viaje (suma por producto). */
+export function cargaDeCamion(viaje: Viaje): ItemCarga[] {
+  const map = new Map<number, ItemCarga>()
+  for (const p of viaje.paradas) {
+    for (const it of (p.items ?? [])) {
+      const existing = map.get(it.vinoId)
+      if (existing) existing.cantidad += it.cantidad
+      else map.set(it.vinoId, { vinoId: it.vinoId, vinoNombre: it.vinoNombre, cantidad: it.cantidad })
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.cantidad - a.cantidad)
 }
 
 /** Cantidad total de productos a llevar en un viaje (manual o suma de paradas). */
 export function totalProductosViaje(v: Viaje): number {
   if (v.cantidadTotalManual && v.cantidadTotalManual > 0) return v.cantidadTotalManual
-  return v.paradas.reduce((acc, p) => acc + (p.cantidadProductos || 0), 0)
+  return v.paradas.reduce((acc, p) => acc + cantidadDeParada(p), 0)
+}
+
+/** Cantidad total de una parada (suma de items). */
+export function cantidadDeParada(p: Parada): number {
+  if (p.items && p.items.length > 0) {
+    return p.items.reduce((acc, it) => acc + (it.cantidad || 0), 0)
+  }
+  return p.cantidadProductos || 0
 }
 
 export function diaSemanaHoy(): DiaSemana {

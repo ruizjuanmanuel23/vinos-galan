@@ -8,8 +8,9 @@
 
 import type {
   Cliente, Vino, Venta, DetalleVenta, DeudaAnotacion,
-  Viaje, Parada, DiaSemana,
+  Viaje, Parada, ItemParada, DiaSemana,
 } from '../types'
+import { cargaDeCamion } from '../types'
 
 // ============================================================
 // CLAVES DE STORAGE
@@ -250,29 +251,53 @@ export const viajesAPI = {
     fecha: string;
     titulo?: string;
     notas?: string;
+    /** Forma simple: solo IDs de clientes. */
     clienteIds?: number[];
-    /** Cantidades de productos por cliente, en el mismo orden que clienteIds. Opcional. */
+    /** Cantidades por cliente (forma vieja, sin desglose por producto). */
     cantidades?: number[];
-    /** Si está seteado, ignora el desglose por cliente y registra esa cantidad total. */
+    /** Forma nueva: detalle de items por cliente. */
+    paradas?: { clienteId: number; items?: { vinoId: number; cantidad: number }[] }[];
+    /** Total manual sin desglose. */
     cantidadTotalManual?: number | null;
   }): Viaje {
     const list = load<Viaje>(K.viajes)
-    const ids = data.clienteIds ?? []
-    const cants = data.cantidades ?? []
     const paradas: Parada[] = []
-    ids.forEach((cId, i) => {
-      const cliente = clientesAPI.byId(cId)
-      if (!cliente) return
-      paradas.push({
-        id: nextId(),
-        cliente,
-        orden: i + 1,
-        estado: 'PENDIENTE',
-        notas: null,
-        horaVisita: null,
-        cantidadProductos: Number(cants[i] ?? 0),
+
+    // Forma nueva: usa paradas con items
+    if (data.paradas && data.paradas.length > 0) {
+      data.paradas.forEach((p, i) => {
+        const cliente = clientesAPI.byId(p.clienteId)
+        if (!cliente) return
+        const items: ItemParada[] = (p.items ?? []).map(it => {
+          const v = vinosAPI.byId(it.vinoId)
+          return {
+            id: nextId(),
+            vinoId: it.vinoId,
+            vinoNombre: v?.nombre ?? '—',
+            cantidad: Number(it.cantidad) || 0,
+          }
+        }).filter(it => it.cantidad > 0)
+        const cantTotal = items.reduce((acc, it) => acc + it.cantidad, 0)
+        paradas.push({
+          id: nextId(), cliente, orden: i + 1,
+          estado: 'PENDIENTE', notas: null, horaVisita: null,
+          items, cantidadProductos: cantTotal,
+        })
       })
-    })
+    } else {
+      // Forma vieja: ids + cantidades genéricas
+      const ids = data.clienteIds ?? []
+      const cants = data.cantidades ?? []
+      ids.forEach((cId, i) => {
+        const cliente = clientesAPI.byId(cId)
+        if (!cliente) return
+        paradas.push({
+          id: nextId(), cliente, orden: i + 1,
+          estado: 'PENDIENTE', notas: null, horaVisita: null,
+          items: [], cantidadProductos: Number(cants[i] ?? 0),
+        })
+      })
+    }
 
     const nuevo: Viaje = {
       id: nextId(),
@@ -284,10 +309,74 @@ export const viajesAPI = {
       fin: null,
       paradas,
       cantidadTotalManual: data.cantidadTotalManual ?? null,
+      cargado: false,
+      fechaCarga: null,
     }
     list.push(nuevo)
     save(K.viajes, list)
     return nuevo
+  },
+
+  /** Setea los items de una parada (reemplaza la lista entera). */
+  setItemsParada(paradaId: number, items: { vinoId: number; cantidad: number }[]): Parada | null {
+    const list = load<Viaje>(K.viajes)
+    for (const v of list) {
+      const idx = v.paradas.findIndex(p => p.id === paradaId)
+      if (idx === -1) continue
+      const p = v.paradas[idx]
+      const nuevos: ItemParada[] = items.filter(it => (it.cantidad || 0) > 0).map(it => {
+        const vino = vinosAPI.byId(it.vinoId)
+        // Reutilizar IDs viejos si existen para no romper claves React
+        const viejo = (p.items ?? []).find(x => x.vinoId === it.vinoId)
+        return {
+          id: viejo?.id ?? nextId(),
+          vinoId: it.vinoId,
+          vinoNombre: vino?.nombre ?? viejo?.vinoNombre ?? '—',
+          cantidad: Number(it.cantidad),
+        }
+      })
+      p.items = nuevos
+      p.cantidadProductos = nuevos.reduce((acc, it) => acc + it.cantidad, 0)
+      save(K.viajes, list)
+      return p
+    }
+    return null
+  },
+
+  /**
+   * Carga el camión: descuenta de stock los productos del viaje.
+   * Si el stock no alcanza, no descuenta nada y devuelve error.
+   */
+  cargarCamion(viajeId: number): { ok: true; viaje: Viaje } | { ok: false; faltantes: string[] } {
+    const v = viajesAPI.byId(viajeId)
+    if (!v) return { ok: false, faltantes: ['Viaje no encontrado'] }
+    if (v.cargado) return { ok: true, viaje: v }
+    const carga = cargaDeCamion(v)
+    const faltantes: string[] = []
+    for (const c of carga) {
+      const vino = vinosAPI.byId(c.vinoId)
+      if (!vino) { faltantes.push(`${c.vinoNombre} (eliminado de bodega)`); continue }
+      if (vino.stock < c.cantidad) faltantes.push(`${vino.nombre}: hay ${vino.stock}, faltan ${c.cantidad - vino.stock}`)
+    }
+    if (faltantes.length > 0) return { ok: false, faltantes }
+    // Todo OK: descuento
+    for (const c of carga) vinosAPI.descontarStock(c.vinoId, c.cantidad)
+    const viaje = viajesAPI._update(viajeId, vv => ({ ...vv, cargado: true, fechaCarga: nowISO() }))!
+    return { ok: true, viaje }
+  },
+
+  /** Descarga el camión: devuelve el stock. Solo si el viaje no está finalizado. */
+  descargarCamion(viajeId: number): Viaje | null {
+    const v = viajesAPI.byId(viajeId)
+    if (!v || !v.cargado) return v
+    if (v.estado === 'FINALIZADO') return v
+    const carga = cargaDeCamion(v)
+    for (const c of carga) {
+      const vino = vinosAPI.byId(c.vinoId)
+      if (!vino) continue
+      vinosAPI.update(vino.id, { stock: vino.stock + c.cantidad })
+    }
+    return viajesAPI._update(viajeId, vv => ({ ...vv, cargado: false, fechaCarga: null }))
   },
   update(id: number, data: Partial<Pick<Viaje, 'titulo' | 'notas' | 'fecha' | 'cantidadTotalManual'>>): Viaje | null {
     const list = load<Viaje>(K.viajes)
@@ -312,6 +401,7 @@ export const viajesAPI = {
       const nueva: Parada = {
         id: nextId(), cliente, orden, estado: 'PENDIENTE',
         notas: null, horaVisita: null,
+        items: [],
         cantidadProductos: Number(cantidadProductos) || 0,
       }
       return { ...v, paradas: [...v.paradas, nueva] }
@@ -434,6 +524,16 @@ export async function handleRequest(
   if (M === 'POST' && P === '/viajes') return viajesAPI.create(body)
   m = P.match(/^\/viajes\/(\d+)\/finalizar$/)
   if (M === 'PUT' && m) return viajesAPI.finalizar(Number(m[1]))
+  m = P.match(/^\/viajes\/(\d+)\/cargar$/)
+  if (M === 'POST' && m) {
+    const res = viajesAPI.cargarCamion(Number(m[1]))
+    if (!res.ok) throw { response: { status: 409, data: res.faltantes.join('\n') } }
+    return res.viaje
+  }
+  m = P.match(/^\/viajes\/(\d+)\/descargar$/)
+  if (M === 'POST' && m) return viajesAPI.descargarCamion(Number(m[1]))
+  m = P.match(/^\/viajes\/paradas\/(\d+)\/items$/)
+  if (M === 'PUT' && m) return viajesAPI.setItemsParada(Number(m[1]), body.items ?? [])
   m = P.match(/^\/viajes\/(\d+)\/paradas$/)
   if (M === 'POST' && m) return viajesAPI.agregarParada(Number(m[1]), body.clienteId, body.cantidadProductos)
   m = P.match(/^\/viajes\/paradas\/(\d+)$/)

@@ -83,10 +83,8 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="h-16 sm:h-20 flex items-center justify-between gap-4">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-3 shrink-0 select-none">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br from-botella-600 to-botella-800 ring-2 ring-dorado-400/50 flex items-center justify-center shadow-lg">
-                <span className="text-dorado-300 font-black text-base sm:text-lg leading-none" style={{ fontFamily: 'Georgia, serif' }}>VG</span>
-              </div>
+            <Link to="/" className="flex items-center gap-2.5 shrink-0 select-none">
+              <img src="/logo-vg.png" alt="Vinos Galán" className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-xl" />
               <div className="leading-tight">
                 <div className="font-black tracking-wide text-sm sm:text-base">VINOS GALAN</div>
                 <div className="text-[9px] sm:text-[10px] text-dorado-300 tracking-[0.2em] uppercase">La Plata · 1942</div>
@@ -237,9 +235,7 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-botella-600 to-botella-800 ring-2 ring-dorado-400/40 flex items-center justify-center">
-                <span className="text-dorado-300 font-black text-lg" style={{ fontFamily: 'Georgia, serif' }}>VG</span>
-              </div>
+              <img src="/logo-vg.png" alt="Vinos Galán" className="w-14 h-14 object-contain drop-shadow" />
               <div>
                 <div className="font-black tracking-wide text-lg">VINOS GALAN</div>
                 <div className="text-[11px] text-dorado-300 tracking-[0.25em] uppercase">La Plata · Desde 1942</div>
@@ -273,8 +269,21 @@ export default function PublicLayout() {
           </div>
         </div>
 
+        {/* Franja celeste y blanca — guiño argentino */}
+        <div className="h-1 flex">
+          <div className="flex-1 bg-sky-400" />
+          <div className="flex-1 bg-white" />
+          <div className="flex-1 bg-sky-400" />
+        </div>
+
         <div className="border-t border-botella-800/60 py-5 text-center text-xs text-botella-400">
-          © {new Date().getFullYear()} Vinos Galán La Plata · Distribuidora de vinos desde 1942
+          <span className="inline-flex items-center gap-2">
+            <span>© {new Date().getFullYear()} Vinos Galán La Plata</span>
+            <span className="text-dorado-400">·</span>
+            <span>Distribuidora desde 1942</span>
+            <span className="text-dorado-400">·</span>
+            <span className="text-botella-300">🇦🇷 Hecho en Argentina</span>
+          </span>
         </div>
       </footer>
     </div>
