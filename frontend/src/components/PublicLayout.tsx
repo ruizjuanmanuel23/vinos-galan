@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import PasswordModal from './PasswordModal'
+import Logo from './Logo'
 import { isAuth } from '../services/auth'
 
 const menu = [
@@ -84,7 +85,8 @@ export default function PublicLayout() {
           <div className="h-16 sm:h-20 flex items-center justify-between gap-4">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2.5 shrink-0 select-none">
-              <img src="/logo-vg.png" alt="Vinos Galán" className="w-12 h-12 sm:w-14 sm:h-14 object-contain drop-shadow-xl" />
+              <div className="hidden sm:block"><Logo size={56} /></div>
+              <div className="sm:hidden"><Logo size={44} /></div>
               <div className="leading-tight">
                 <div className="font-black tracking-wide text-sm sm:text-base">VINOS GALAN</div>
                 <div className="text-[9px] sm:text-[10px] text-dorado-300 tracking-[0.2em] uppercase">La Plata · 1942</div>
@@ -235,7 +237,7 @@ export default function PublicLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-3 mb-3">
-              <img src="/logo-vg.png" alt="Vinos Galán" className="w-14 h-14 object-contain drop-shadow" />
+              <Logo size={56} />
               <div>
                 <div className="font-black tracking-wide text-lg">VINOS GALAN</div>
                 <div className="text-[11px] text-dorado-300 tracking-[0.25em] uppercase">La Plata · Desde 1942</div>

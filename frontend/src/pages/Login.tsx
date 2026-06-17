@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { login } from '../services/auth'
 import { IMG } from '../data/catalogoDestacado'
+import Logo from '../components/Logo'
 
 export default function Login() {
   const [value, setValue] = useState('')
@@ -33,7 +34,9 @@ export default function Login() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex flex-col items-center gap-3 group">
-            <img src="/logo-vg.png" alt="Vinos Galán" className="w-28 h-28 object-contain drop-shadow-2xl group-hover:scale-105 transition-transform" />
+            <div className="group-hover:scale-105 transition-transform">
+              <Logo size={112} glow />
+            </div>
             <div className="leading-tight">
               <div className="font-black tracking-wide text-white text-lg">VINOS GALAN</div>
               <div className="text-[10px] text-dorado-300 tracking-[0.25em] uppercase">La Plata · 1942</div>

@@ -61,11 +61,16 @@ export default function Landing() {
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-24">
           {/* Logo grande */}
-          <img
-            src="/logo-vg.png"
-            alt="Vinos Galán"
-            className="w-40 h-40 sm:w-52 sm:h-52 object-contain mx-auto mb-6 drop-shadow-2xl"
-          />
+          <div className="mx-auto mb-6 w-40 h-40 sm:w-52 sm:h-52">
+            <div className="w-full h-full rounded-full overflow-hidden bg-gradient-to-br from-botella-600 to-botella-800 ring-4 ring-dorado-400/40 shadow-2xl shadow-dorado-500/30">
+              <img
+                src="/logo-vg.png"
+                alt="Vinos Galán"
+                className="w-full h-full object-cover scale-[1.18] origin-center select-none pointer-events-none"
+                draggable={false}
+              />
+            </div>
+          </div>
 
           {/* Badge con bandera */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-dorado-500/15 border border-dorado-500/30 mb-6">

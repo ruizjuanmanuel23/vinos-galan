@@ -1,7 +1,6 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { NavLink, Outlet, useNavigate, Link } from 'react-router-dom'
 import { logout } from '../services/auth'
-
-import { Link } from 'react-router-dom'
+import Logo from './Logo'
 
 const nav = [
   { to: '/app',             label: 'Inicio',          short: 'Inicio',   icon: 'M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M9 22V12h6v10', exact: true },
@@ -40,7 +39,7 @@ export default function Layout() {
       >
         {/* Logo — click vuelve a la landing */}
         <Link to="/" title="Volver al inicio" className="h-[72px] flex items-center px-3 border-b border-botella-800 shrink-0 hover:bg-botella-800/50 transition">
-          <img src="/logo-vg.png" alt="Vinos Galán" className="w-12 h-12 object-contain shrink-0 drop-shadow" />
+          <Logo size={48} />
           <div className="ml-3 leading-tight opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">
             <div className="font-black tracking-wide text-sm" style={{ fontFamily: 'Georgia, serif' }}>Vinos Galán</div>
             <div className="text-[9px] text-dorado-300 tracking-[0.2em] uppercase mt-0.5">Panel · La Plata</div>
@@ -94,7 +93,7 @@ export default function Layout() {
         {/* Top bar — solo mobile */}
         <header className="lg:hidden sticky top-0 z-30 bg-botella-900 text-white shadow" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
           <Link to="/" className="px-4 py-2 flex items-center gap-2 active:bg-botella-800 transition">
-            <img src="/logo-vg.png" alt="Vinos Galán" className="w-11 h-11 object-contain shrink-0 drop-shadow" />
+            <Logo size={44} />
             <div className="leading-tight">
               <div className="font-black tracking-wide text-sm">VINOS GALAN</div>
               <div className="text-[9px] text-dorado-300 tracking-widest uppercase">La Plata · 1942</div>
