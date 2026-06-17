@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { CATALOGO_DESTACADO, IMG } from '../data/catalogoDestacado'
-import { vinosAPI } from '../services/storage'
+import { vinosDB } from '../services/db'
 import { whatsappLink } from '../data/config'
 import type { Vino } from '../types'
 
@@ -45,8 +45,14 @@ export default function Catalogo() {
     try { localStorage.setItem(STORAGE_CARRITO, JSON.stringify(carrito)) } catch {}
   }, [carrito])
 
+  const [cargados, setCargados] = useState<Vino[]>([])
+  useEffect(() => {
+    vinosDB.listActivos()
+      .then(vs => setCargados(vs.filter(v => v.mostrarEnCatalogo !== false)))
+      .catch(() => {})
+  }, [])
+
   const items: ItemCatalogo[] = useMemo(() => {
-    const cargados = vinosAPI.listActivos().filter(v => v.mostrarEnCatalogo !== false)
     if (cargados.length === 0) {
       return CATALOGO_DESTACADO.map((v, i) => ({
         id: `dest-${i}`,
@@ -72,7 +78,7 @@ export default function Catalogo() {
         stock: v.stock,
       }
     })
-  }, [])
+  }, [cargados])
 
   const varietales = useMemo(() => {
     const s = new Set(items.map(i => i.varietal).filter(Boolean))

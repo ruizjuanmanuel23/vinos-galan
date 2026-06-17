@@ -2,10 +2,10 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App'
 import './index.css'
-import { seedIfEmpty } from './services/storage'
+import { migrarSiHaceFalta } from './services/migration'
 
-// Si es la primera vez que abrís la app, cargamos algunos datos de ejemplo
-seedIfEmpty()
+// Migración inicial localStorage → Supabase (solo se ejecuta una vez por dispositivo)
+migrarSiHaceFalta().catch(err => console.error('Migración inicial falló:', err))
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

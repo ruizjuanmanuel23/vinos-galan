@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/axios'
-import { resumenAPI, type ResumenDia } from '../services/storage'
+import { statsAPI, type ResumenDia } from '../services/stats'
 import { diaSemanaHoy, DIA_LABEL, type Cliente, type Viaje } from '../types'
 
 const fmtPlata = (n: number) => '$' + n.toLocaleString('es-AR', { maximumFractionDigits: 0 })
@@ -21,7 +21,7 @@ export default function Inicio() {
     horaActual < 19 ? 'Buenas tardes' : 'Buenas noches'
 
   useEffect(() => {
-    setResumenDia(resumenAPI.delDia())
+    statsAPI.delDia().then(setResumenDia).catch(() => {})
     api.get<Cliente[]>(`/clientes/dia/${dia}`).then(r => setClientesHoy(r.data)).catch(() => {})
     api.get<Viaje[]>('/viajes').then(r => {
       const enCurso = r.data.find(v => v.estado === 'EN_CURSO')

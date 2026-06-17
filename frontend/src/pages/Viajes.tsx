@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
+import { useRealtimeRefresh } from '../services/realtime'
 import { DIAS_SEMANA, DIA_LABEL, DIA_CORTO, diaSemanaHoy, totalProductosViaje, type Cliente, type DiaSemana, type Viaje } from '../types'
 
 const fmt = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
@@ -20,6 +21,7 @@ export default function Viajes() {
   const cargarViajes = () => api.get<Viaje[]>('/viajes').then(r => setViajes(r.data)).catch(() => {})
 
   useEffect(() => { cargarViajes() }, [])
+  useRealtimeRefresh(tabla => { if (tabla === 'viajes') cargarViajes() })
 
   useEffect(() => {
     api.get<Cliente[]>(`/clientes/dia/${diaSel}`).then(r => {

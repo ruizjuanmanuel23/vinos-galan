@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  resumenAPI,
+  statsAPI,
   type ResumenDia, type RankingCliente, type RankingProducto,
-} from '../services/storage'
+} from '../services/stats'
 import type { Vino } from '../types'
 
 const fmtPlata = (n: number) =>
@@ -19,14 +19,14 @@ export default function Resumen() {
   const [stockBajo, setStockBajo] = useState<Vino[]>([])
 
   useEffect(() => {
-    setDia(resumenAPI.delDia(diaSel))
+    statsAPI.delDia(diaSel).then(setDia).catch(() => {})
   }, [diaSel])
 
   useEffect(() => {
-    setMes(resumenAPI.delMes())
-    setTopClientes(resumenAPI.topClientes(periodo, 5))
-    setTopProductos(resumenAPI.topProductos(periodo, 5))
-    setStockBajo(resumenAPI.stockCritico(5))
+    statsAPI.delMes().then(setMes).catch(() => {})
+    statsAPI.topClientes(periodo, 5).then(setTopClientes).catch(() => {})
+    statsAPI.topProductos(periodo, 5).then(setTopProductos).catch(() => {})
+    statsAPI.stockCritico(5).then(setStockBajo).catch(() => {})
   }, [periodo])
 
   const irHoy = () => setDiaSel(new Date().toISOString().slice(0, 10))

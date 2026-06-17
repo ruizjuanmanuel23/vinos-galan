@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/axios'
+import { useRealtimeRefresh } from '../services/realtime'
 import Modal from '../components/Modal'
 import {
   DIAS_SEMANA, DIA_LABEL, aplicarVariables, whatsappCliente,
@@ -19,6 +20,7 @@ export default function Clientes() {
 
   const cargar = () => api.get<Cliente[]>('/clientes').then(r => setClientes(r.data)).catch(() => {})
   useEffect(() => { cargar() }, [])
+  useRealtimeRefresh(tabla => { if (tabla === 'clientes') cargar() })
   useEffect(() => {
     api.get<PlantillaWhatsApp[]>('/plantillas').then(r => {
       const def = r.data.find(p => p.esDefault) ?? r.data[0] ?? null

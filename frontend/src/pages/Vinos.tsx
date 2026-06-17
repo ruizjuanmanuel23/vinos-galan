@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import api from '../api/axios'
+import { useRealtimeRefresh } from '../services/realtime'
 import Modal from '../components/Modal'
 import { comprimirImagen, tamañoKb } from '../utils/imagen'
 import type { Vino } from '../types'
@@ -24,6 +25,7 @@ export default function Vinos() {
 
   const cargar = () => api.get<Vino[]>('/vinos/admin').then(r => setVinos(r.data)).catch(() => {})
   useEffect(() => { cargar() }, [])
+  useRealtimeRefresh(tabla => { if (tabla === 'vinos') cargar() })
 
   const abrirNuevo = () => { setEditando(null); setForm(EMPTY); setShow(true) }
   const abrirEditar = (v: Vino) => {

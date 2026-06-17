@@ -1,14 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CATALOGO_DESTACADO, IMG } from '../data/catalogoDestacado'
-import { vinosAPI } from '../services/storage'
+import { vinosDB } from '../services/db'
 import { isAuth } from '../services/auth'
 import PasswordModal from '../components/PasswordModal'
 import Icon from '../components/Icon'
+import type { Vino } from '../types'
 
 export default function Landing() {
   const navigate = useNavigate()
   const [pwdOpen, setPwdOpen] = useState(false)
+  const [vinosCargados, setVinosCargados] = useState<Vino[]>([])
+
+  useEffect(() => {
+    vinosDB.listActivos().then(vs => setVinosCargados(vs.filter(v => v.mostrarEnCatalogo !== false && v.stock > 0))).catch(() => {})
+  }, [])
 
   const handleApk = (e: React.MouseEvent) => {
     if (isAuth()) return // deja el download nativo
@@ -28,7 +34,6 @@ export default function Landing() {
   }, [navigate])
 
   // Vinos para mostrar: los que cargó Nahue + (si está vacío) el catálogo destacado
-  const vinosCargados = vinosAPI.listActivos().filter(v => v.mostrarEnCatalogo !== false && v.stock > 0)
   const destacados = vinosCargados.length > 0
     ? vinosCargados.slice(0, 4).map(v => ({
         nombre: v.nombre,
