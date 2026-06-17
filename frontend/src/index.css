@@ -41,10 +41,20 @@
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
   }
   .page-title {
-    @apply text-xl sm:text-2xl font-black text-botella-900;
+    @apply text-xl sm:text-2xl font-black text-botella-900 tracking-tight;
+    font-family: Georgia, 'Times New Roman', serif;
   }
   .page-subtitle {
-    @apply text-xs sm:text-sm text-gray-500 mt-0.5;
+    @apply text-xs sm:text-sm text-gray-500 mt-1;
+  }
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-200 transition-shadow;
+  }
+  .card-hover {
+    @apply hover:shadow-md hover:border-gray-300;
+  }
+  .section-title {
+    @apply text-sm sm:text-base font-bold uppercase tracking-[0.15em] text-gray-500;
   }
   .scroll-h {
     @apply overflow-x-auto -mx-4 px-4 sm:-mx-0 sm:px-0;

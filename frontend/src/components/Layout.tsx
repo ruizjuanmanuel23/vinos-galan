@@ -9,6 +9,7 @@ const nav = [
   { to: '/app/clientes',     label: 'Clientes',        short: 'Clientes', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
   { to: '/app/vinos',        label: 'Bodega',          short: 'Bodega',   icon: 'M8 2v6a4 4 0 0 0 8 0V2 M8 2h8M12 12v10M8 22h8' },
   { to: '/app/ventas/nueva', label: 'Nueva venta',     short: 'Vender',   icon: 'M9 7V3h6v4M3 7h18l-2 13H5L3 7z M9 11v6M15 11v6' },
+  { to: '/app/resumen',      label: 'Resumen',         short: 'Resumen',  icon: 'M3 3v18h18 M7 14l4-4 4 4 5-5' },
   { to: '/app/configuracion', label: 'Configuración',  short: 'Config',   icon: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z' },
 ]
 
@@ -38,11 +39,11 @@ export default function Layout() {
                    w-16 hover:w-60 transition-[width] duration-300 ease-in-out overflow-hidden shadow-xl"
       >
         {/* Logo — click vuelve a la landing */}
-        <Link to="/" title="Volver al inicio" className="h-[68px] flex items-center px-2 border-b border-botella-800 shrink-0 hover:bg-botella-800/50 transition">
+        <Link to="/" title="Volver al inicio" className="h-[72px] flex items-center px-3 border-b border-botella-800 shrink-0 hover:bg-botella-800/50 transition">
           <img src="/logo-vg.png" alt="Vinos Galán" className="w-12 h-12 object-contain shrink-0 drop-shadow" />
-          <div className="ml-2 leading-tight opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-            <div className="font-black tracking-wide text-sm">VINOS GALAN</div>
-            <div className="text-[10px] text-dorado-300 tracking-widest uppercase">La Plata · 1942</div>
+          <div className="ml-3 leading-tight opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+            <div className="font-black tracking-wide text-sm" style={{ fontFamily: 'Georgia, serif' }}>Vinos Galán</div>
+            <div className="text-[9px] text-dorado-300 tracking-[0.2em] uppercase mt-0.5">Panel · La Plata</div>
           </div>
         </Link>
 
@@ -82,9 +83,9 @@ export default function Layout() {
           <span className="ml-3 whitespace-nowrap opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">Cerrar sesión</span>
         </button>
 
-        <div className="h-10 px-3 border-t border-botella-800 flex items-center text-[10px] text-botella-300 tracking-wider uppercase whitespace-nowrap overflow-hidden">
-          <span className="shrink-0">v1.0</span>
-          <span className="ml-2 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">· Sistema</span>
+        <div className="h-10 px-3 border-t border-botella-800 flex items-center text-[10px] text-botella-300 tracking-[0.15em] uppercase whitespace-nowrap overflow-hidden">
+          <span className="shrink-0">v1.2</span>
+          <span className="ml-2 opacity-0 group-hover/sidebar:opacity-100 transition-opacity duration-200">· Distribución</span>
         </div>
       </aside>
 
@@ -112,7 +113,7 @@ export default function Layout() {
           className="lg:hidden fixed bottom-0 inset-x-0 z-30 bg-white border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <div className="grid grid-cols-6">
+          <div className="grid grid-cols-7">
             {nav.map(n => (
               <NavLink
                 key={n.to}

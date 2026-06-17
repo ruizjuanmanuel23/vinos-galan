@@ -450,6 +450,133 @@ export const viajesAPI = {
 }
 
 // ============================================================
+// RESUMEN / ESTADÍSTICAS
+// ============================================================
+export interface ResumenDia {
+  fecha: string
+  ventas: number             // cantidad de ventas
+  recaudado: number          // $ vendido
+  paradas: number            // paradas hechas (visitadas)
+  productosEntregados: number
+  viajesEnCurso: number
+}
+
+export interface RankingCliente {
+  cliente: Cliente
+  totalGastado: number
+  cantidadCompras: number
+}
+
+export interface RankingProducto {
+  vino: Vino
+  cantidadVendida: number
+  totalRecaudado: number
+}
+
+export const resumenAPI = {
+  /** Resumen del día (ventas + paradas + productos entregados). */
+  delDia(fechaISO?: string): ResumenDia {
+    const fecha = fechaISO ?? new Date().toISOString().slice(0, 10)
+    const ventas = load<Venta>(K.ventas)
+    const viajes = load<Viaje>(K.viajes)
+
+    // Ventas: filtrar por fecha (creadoEn / fecha empieza con yyyy-mm-dd)
+    const ventasHoy = ventas.filter(v => (v.fecha ?? '').startsWith(fecha))
+    const recaudado = ventasHoy.reduce((acc, v) => acc + Number(v.total || 0), 0)
+
+    // Paradas hechas en cualquier viaje de hoy
+    let paradas = 0
+    let productosEntregados = 0
+    let viajesEnCurso = 0
+    for (const v of viajes) {
+      if (v.fecha !== fecha) continue
+      if (v.estado === 'EN_CURSO') viajesEnCurso++
+      for (const p of v.paradas) {
+        if (p.estado === 'VISITADA' && (p.horaVisita ?? '').startsWith(fecha)) {
+          paradas++
+          productosEntregados += p.cantidadProductos || 0
+        }
+      }
+    }
+
+    return { fecha, ventas: ventasHoy.length, recaudado, paradas, productosEntregados, viajesEnCurso }
+  },
+
+  /** Top N clientes por total gastado en los últimos N días. */
+  topClientes(dias = 30, limite = 5): RankingCliente[] {
+    const desde = new Date()
+    desde.setDate(desde.getDate() - dias)
+    const desdeISO = desde.toISOString().slice(0, 10)
+    const ventas = load<Venta>(K.ventas).filter(v => (v.fecha ?? '') >= desdeISO)
+    const map = new Map<number, { cliente: Cliente; total: number; n: number }>()
+    for (const v of ventas) {
+      if (!v.cliente) continue
+      const existing = map.get(v.cliente.id)
+      const total = Number(v.total || 0)
+      if (existing) {
+        existing.total += total
+        existing.n += 1
+      } else {
+        map.set(v.cliente.id, { cliente: v.cliente, total, n: 1 })
+      }
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.total - a.total)
+      .slice(0, limite)
+      .map(x => ({ cliente: x.cliente, totalGastado: x.total, cantidadCompras: x.n }))
+  },
+
+  /** Top N productos más vendidos en los últimos N días. */
+  topProductos(dias = 30, limite = 5): RankingProducto[] {
+    const desde = new Date()
+    desde.setDate(desde.getDate() - dias)
+    const desdeISO = desde.toISOString().slice(0, 10)
+    const ventas = load<Venta>(K.ventas).filter(v => (v.fecha ?? '') >= desdeISO)
+    const map = new Map<number, { vino: Vino; cant: number; total: number }>()
+    for (const v of ventas) {
+      for (const d of (v.detalles ?? [])) {
+        const existing = map.get(d.vino.id)
+        const subtotal = Number(d.precioUnitario || 0) * d.cantidad
+        if (existing) {
+          existing.cant += d.cantidad
+          existing.total += subtotal
+        } else {
+          map.set(d.vino.id, { vino: d.vino, cant: d.cantidad, total: subtotal })
+        }
+      }
+    }
+    return Array.from(map.values())
+      .sort((a, b) => b.cant - a.cant)
+      .slice(0, limite)
+      .map(x => ({ vino: x.vino, cantidadVendida: x.cant, totalRecaudado: x.total }))
+  },
+
+  /** Productos con stock bajo (≤ umbral). */
+  stockCritico(umbral = 5): Vino[] {
+    return load<Vino>(K.vinos)
+      .filter(v => v.activo && v.stock <= umbral)
+      .sort((a, b) => a.stock - b.stock)
+  },
+
+  /** Resumen del mes: ventas, recaudación, paradas. */
+  delMes(year?: number, month?: number): { ventas: number; recaudado: number; paradas: number } {
+    const ahora = new Date()
+    const y = year ?? ahora.getFullYear()
+    const m = month ?? ahora.getMonth() + 1
+    const prefijo = `${y}-${String(m).padStart(2, '0')}`
+    const ventas = load<Venta>(K.ventas).filter(v => (v.fecha ?? '').startsWith(prefijo))
+    const viajes = load<Viaje>(K.viajes).filter(v => v.fecha.startsWith(prefijo))
+    let paradas = 0
+    for (const v of viajes) paradas += v.paradas.filter(p => p.estado === 'VISITADA').length
+    return {
+      ventas: ventas.length,
+      recaudado: ventas.reduce((acc, v) => acc + Number(v.total || 0), 0),
+      paradas,
+    }
+  },
+}
+
+// ============================================================
 // PLANTILLAS WHATSAPP
 // ============================================================
 export const plantillasAPI = {

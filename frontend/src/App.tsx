@@ -16,6 +16,7 @@ import ClienteFicha from './pages/ClienteFicha'
 import Vinos from './pages/Vinos'
 import NuevaVenta from './pages/NuevaVenta'
 import Configuracion from './pages/Configuracion'
+import Resumen from './pages/Resumen'
 
 export default function App() {
   return (
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="clientes/:id" element={<ClienteFicha />} />
           <Route path="vinos" element={<Vinos />} />
           <Route path="ventas/nueva" element={<NuevaVenta />} />
+          <Route path="resumen" element={<Resumen />} />
           <Route path="configuracion" element={<Configuracion />} />
         </Route>
 
