@@ -1,4 +1,5 @@
 import { IMG } from '../data/catalogoDestacado'
+import Icon from '../components/Icon'
 
 export default function Nosotros() {
   return (
@@ -116,10 +117,10 @@ export default function Nosotros() {
               .map(v => (
                 <div
                   key={v}
-                  className="bg-botella-900/40 border border-botella-700/40 rounded-xl p-4 text-center hover:border-dorado-500/50 transition"
+                  className="group bg-botella-900/40 border border-botella-700/40 rounded-xl p-5 text-center hover:border-dorado-500/50 hover:bg-botella-900/60 transition"
                 >
-                  <div className="text-2xl mb-2">🍇</div>
-                  <p className="font-bold text-sm">{v}</p>
+                  <Icon name="grapes" className="w-7 h-7 text-dorado-400/80 mx-auto mb-3 group-hover:text-dorado-300 transition" />
+                  <p className="font-bold text-sm" style={{ fontFamily: 'Georgia, serif' }}>{v}</p>
                 </div>
               ))}
           </div>

@@ -1,5 +1,6 @@
 import { IMG } from '../data/catalogoDestacado'
 import { WHATSAPP_NUM, TELEFONO_VISIBLE, EMAIL, DIRECCION, DIRECCION_CIUDAD, HORARIO, whatsappLink } from '../data/config'
+import Icon from '../components/Icon'
 
 export default function Contacto() {
   return (
@@ -29,9 +30,11 @@ export default function Contacto() {
             href={whatsappLink('Hola, quería consultar por Vinos Galán')}
             target="_blank"
             rel="noreferrer"
-            className="group bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-8 transition text-center"
+            className="group bg-emerald-600/10 hover:bg-emerald-600/20 border border-emerald-500/30 hover:border-emerald-400 rounded-2xl p-8 transition text-center hover:-translate-y-1 duration-300"
           >
-            <div className="text-5xl mb-3">💬</div>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center group-hover:scale-110 transition">
+              <Icon name="chat" className="w-8 h-8 text-emerald-300" />
+            </div>
             <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>WhatsApp</h3>
             <p className="text-sm text-emerald-300 font-bold mb-2">{TELEFONO_VISIBLE}</p>
             <p className="text-xs text-botella-300">Nahuel García · Pedidos y consultas</p>
@@ -39,9 +42,11 @@ export default function Contacto() {
 
           <a
             href={`tel:+${WHATSAPP_NUM}`}
-            className="group bg-botella-900/40 hover:bg-botella-800/60 border border-botella-700 hover:border-dorado-400 rounded-2xl p-8 transition text-center"
+            className="group bg-botella-900/40 hover:bg-botella-800/60 border border-botella-700 hover:border-dorado-400 rounded-2xl p-8 transition text-center hover:-translate-y-1 duration-300"
           >
-            <div className="text-5xl mb-3">📞</div>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-dorado-500/15 border border-dorado-400/40 flex items-center justify-center group-hover:scale-110 transition">
+              <Icon name="phone" className="w-8 h-8 text-dorado-300" strokeWidth={1.5} />
+            </div>
             <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>Teléfono</h3>
             <p className="text-sm text-dorado-300 font-bold mb-2">{TELEFONO_VISIBLE}</p>
             <p className="text-xs text-botella-300">Lunes a sábado, 9 a 20 hs.</p>
@@ -49,9 +54,11 @@ export default function Contacto() {
 
           <a
             href={`mailto:${EMAIL}`}
-            className="group bg-botella-900/40 hover:bg-botella-800/60 border border-botella-700 hover:border-dorado-400 rounded-2xl p-8 transition text-center"
+            className="group bg-botella-900/40 hover:bg-botella-800/60 border border-botella-700 hover:border-dorado-400 rounded-2xl p-8 transition text-center hover:-translate-y-1 duration-300"
           >
-            <div className="text-5xl mb-3">✉️</div>
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-dorado-500/15 border border-dorado-400/40 flex items-center justify-center group-hover:scale-110 transition">
+              <Icon name="mail" className="w-8 h-8 text-dorado-300" />
+            </div>
             <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>Email</h3>
             <p className="text-xs text-dorado-300 font-bold mb-2 break-all">{EMAIL}</p>
             <p className="text-xs text-botella-300">Consultas mayoristas</p>
@@ -68,9 +75,11 @@ export default function Contacto() {
               Vení a la sucursal
             </h2>
 
-            <div className="space-y-4 text-botella-200">
+            <div className="space-y-5 text-botella-200">
               <div className="flex gap-3">
-                <span className="text-dorado-400 text-xl shrink-0">📍</span>
+                <div className="w-10 h-10 rounded-full bg-dorado-500/15 border border-dorado-400/30 flex items-center justify-center shrink-0">
+                  <Icon name="map-pin" className="w-5 h-5 text-dorado-300" />
+                </div>
                 <div>
                   <p className="font-bold text-white">{DIRECCION}</p>
                   <p className="text-sm">{DIRECCION_CIUDAD}</p>
@@ -78,7 +87,9 @@ export default function Contacto() {
               </div>
 
               <div className="flex gap-3">
-                <span className="text-dorado-400 text-xl shrink-0">🕐</span>
+                <div className="w-10 h-10 rounded-full bg-dorado-500/15 border border-dorado-400/30 flex items-center justify-center shrink-0">
+                  <Icon name="clock" className="w-5 h-5 text-dorado-300" />
+                </div>
                 <div>
                   <p className="font-bold text-white">Horario de atención</p>
                   <p className="text-sm">{HORARIO.semana}</p>
@@ -87,7 +98,9 @@ export default function Contacto() {
               </div>
 
               <div className="flex gap-3">
-                <span className="text-dorado-400 text-xl shrink-0">🚚</span>
+                <div className="w-10 h-10 rounded-full bg-dorado-500/15 border border-dorado-400/30 flex items-center justify-center shrink-0">
+                  <Icon name="truck" className="w-5 h-5 text-dorado-300" />
+                </div>
                 <div>
                   <p className="font-bold text-white">Reparto a domicilio</p>
                   <p className="text-sm">En toda La Plata y alrededores. Coordinámoslo por teléfono o WhatsApp.</p>

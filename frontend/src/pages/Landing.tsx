@@ -4,6 +4,7 @@ import { CATALOGO_DESTACADO, IMG } from '../data/catalogoDestacado'
 import { vinosAPI } from '../services/storage'
 import { isAuth } from '../services/auth'
 import PasswordModal from '../components/PasswordModal'
+import Icon from '../components/Icon'
 
 export default function Landing() {
   const navigate = useNavigate()
@@ -72,10 +73,11 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Badge con bandera */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-dorado-500/15 border border-dorado-500/30 mb-6">
+          {/* Badge sin emoji */}
+          <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-dorado-500/15 border border-dorado-500/30 mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-dorado-400 animate-pulse" />
-            <span className="text-xs font-semibold text-dorado-300 tracking-[0.25em] uppercase">🇦🇷 Desde 1942 · La Plata</span>
+            <span className="text-xs font-semibold text-dorado-300 tracking-[0.25em] uppercase">Desde 1942 · La Plata</span>
+            <span className="w-1.5 h-1.5 rounded-full bg-dorado-400" />
           </div>
 
           <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight mb-4 leading-none" style={{ fontFamily: 'Georgia, serif' }}>
@@ -275,17 +277,31 @@ export default function Landing() {
             </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
-              { ic: '🚚', t: 'Reparto a domicilio', d: 'Llevamos el pedido hasta la puerta de tu casa o local.' },
-              { ic: '🍇', t: 'Selección propia', d: 'Cada etiqueta pasa por nuestra cata antes de llegar al estante.' },
-              { ic: '🤝', t: 'Trato familiar', d: 'Más de tres generaciones atendiendo personalmente a la clientela.' },
-            ].map(f => (
-              <div key={f.t} className="bg-botella-900/40 backdrop-blur-sm rounded-2xl p-8 border border-botella-700/40 text-center hover:border-dorado-500/30 transition">
-                <div className="text-5xl mb-4">{f.ic}</div>
-                <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>{f.t}</h3>
-                <p className="text-sm text-botella-300 leading-relaxed">{f.d}</p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+            {([
+              { icon: 'truck',   img: IMG.delivery,     t: 'Reparto a domicilio', d: 'Llevamos el pedido hasta la puerta de tu casa o local, día y horario coordinado.' },
+              { icon: 'grapes',  img: IMG.vineyardRows, t: 'Selección propia',    d: 'Cada etiqueta pasa por nuestra cata antes de llegar al estante. Solo lo que tomaríamos.' },
+              { icon: 'handshake', img: IMG.toast,      t: 'Trato familiar',      d: 'Más de tres generaciones atendiendo personalmente a la clientela. Te conocemos por el nombre.' },
+            ] as const).map(f => (
+              <article
+                key={f.t}
+                className="group relative rounded-2xl overflow-hidden border border-botella-700/50 hover:border-dorado-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-dorado-500/10"
+              >
+                {/* Imagen de fondo */}
+                <div className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                     style={{ backgroundImage: `url(${f.img})` }} />
+                {/* Overlay degradado */}
+                <div className="absolute inset-0 bg-gradient-to-b from-botella-950/40 via-botella-950/80 to-botella-950" />
+
+                <div className="relative p-7 sm:p-8 text-center h-full flex flex-col items-center justify-end min-h-[280px] sm:min-h-[320px]">
+                  {/* Ícono SVG en círculo dorado */}
+                  <div className="w-14 h-14 rounded-full bg-dorado-500/15 border border-dorado-400/40 flex items-center justify-center mb-4 group-hover:bg-dorado-500/25 transition">
+                    <Icon name={f.icon as any} className="w-7 h-7 text-dorado-300" />
+                  </div>
+                  <h3 className="font-black text-xl mb-2" style={{ fontFamily: 'Georgia, serif' }}>{f.t}</h3>
+                  <p className="text-sm text-botella-200 leading-relaxed">{f.d}</p>
+                </div>
+              </article>
             ))}
           </div>
         </div>

@@ -91,4 +91,8 @@ export const IMG = {
   cellar:       'https://images.unsplash.com/photo-1543007631-283050bb3e8c?auto=format&fit=crop&w=1200&q=80',
   grapes:       'https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=1200&q=80',
   vineyardSunset: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=1920&q=80',
+  // Imágenes para los 3 features de la Landing
+  delivery: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
+  vineyardRows: 'https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=800&q=80',
+  toast: 'https://images.unsplash.com/photo-1527271982979-83fea3eb3582?auto=format&fit=crop&w=800&q=80',
 }
