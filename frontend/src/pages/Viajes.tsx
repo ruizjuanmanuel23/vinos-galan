@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import api from '../api/axios'
-import { DIAS_SEMANA, DIA_LABEL, DIA_CORTO, diaSemanaHoy, type Cliente, type DiaSemana, type Viaje } from '../types'
+import { DIAS_SEMANA, DIA_LABEL, DIA_CORTO, diaSemanaHoy, totalProductosViaje, type Cliente, type DiaSemana, type Viaje } from '../types'
 
 const fmt = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
 const fmtCorto = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
@@ -13,6 +13,7 @@ export default function Viajes() {
   const [diaSel, setDiaSel] = useState<DiaSemana>(diaSemanaHoy())
   const [clientesDia, setClientesDia] = useState<Cliente[]>([])
   const [seleccionados, setSeleccionados] = useState<number[]>([])
+  const [cantidadesDia, setCantidadesDia] = useState<Record<number, number>>({})
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
@@ -24,8 +25,15 @@ export default function Viajes() {
     api.get<Cliente[]>(`/clientes/dia/${diaSel}`).then(r => {
       setClientesDia(r.data)
       setSeleccionados([])
+      setCantidadesDia({})
     }).catch(() => {})
   }, [diaSel])
+
+  const setCantidadCliente = (clienteId: number, valor: string) => {
+    const n = Math.max(0, Number(valor) || 0)
+    setCantidadesDia(c => ({ ...c, [clienteId]: n }))
+  }
+  const totalDia = seleccionados.reduce((acc, id) => acc + (cantidadesDia[id] || 0), 0)
 
   const porZona = useMemo(() => {
     const out: Record<string, Cliente[]> = {}
@@ -48,6 +56,7 @@ export default function Viajes() {
         fecha: new Date().toISOString().split('T')[0],
         titulo: `Recorrido ${DIA_LABEL[diaSel]}`,
         clienteIds: seleccionados,
+        cantidades: seleccionados.map(id => cantidadesDia[id] || 0),
       })
       navigate(`/app/viajes/${r.data.id}`)
     } finally { setLoading(false) }
@@ -78,7 +87,7 @@ export default function Viajes() {
             </div>
             {seleccionados.length > 0 && (
               <button onClick={armarViaje} disabled={loading} className="btn-dorado text-xs sm:text-sm">
-                🚚 Armar con {seleccionados.length}
+                🚚 Armar con {seleccionados.length}{totalDia > 0 ? ` · ${totalDia} u.` : ''}
               </button>
             )}
           </div>
@@ -128,19 +137,35 @@ export default function Viajes() {
                       {lista.map(c => {
                         const sel = seleccionados.includes(c.id)
                         return (
-                          <button
-                            key={c.id}
-                            onClick={() => toggle(c.id)}
-                            className={`w-full flex items-center gap-2.5 p-2.5 sm:p-3 text-left hover:bg-gray-50 transition ${sel ? 'bg-botella-50' : ''}`}
-                          >
-                            <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${sel ? 'bg-botella-700 border-botella-700' : 'border-gray-300'}`}>
-                              {sel && <span className="text-white text-xs leading-none">✓</span>}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-gray-900 truncate">{c.nombre}</p>
-                              {c.direccion && <p className="text-xs text-gray-500 truncate">{c.direccion}</p>}
-                            </div>
-                          </button>
+                          <div key={c.id} className={`flex items-stretch transition ${sel ? 'bg-botella-50' : ''}`}>
+                            <button
+                              onClick={() => toggle(c.id)}
+                              className="flex-1 flex items-center gap-2.5 p-2.5 sm:p-3 text-left hover:bg-gray-50 transition"
+                            >
+                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${sel ? 'bg-botella-700 border-botella-700' : 'border-gray-300'}`}>
+                                {sel && <span className="text-white text-xs leading-none">✓</span>}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-semibold text-sm text-gray-900 truncate">{c.nombre}</p>
+                                {c.direccion && <p className="text-xs text-gray-500 truncate">{c.direccion}</p>}
+                              </div>
+                            </button>
+                            {sel && (
+                              <div className="flex items-center gap-1 pr-2.5 shrink-0">
+                                <input
+                                  type="number"
+                                  inputMode="numeric"
+                                  min={0}
+                                  placeholder="0"
+                                  className="w-14 text-center text-xs font-bold bg-white border border-botella-300 rounded px-1 py-1 focus:outline-none focus:border-botella-500"
+                                  value={cantidadesDia[c.id] || ''}
+                                  onChange={e => setCantidadCliente(c.id, e.target.value)}
+                                  onClick={e => e.stopPropagation()}
+                                />
+                                <span className="text-[9px] text-gray-500 uppercase font-bold">u.</span>
+                              </div>
+                            )}
+                          </div>
                         )
                       })}
                     </div>
@@ -179,6 +204,7 @@ export default function Viajes() {
                 const visitadas = v.paradas.filter(p => p.estado === 'VISITADA').length
                 const total = v.paradas.length
                 const enCurso = v.estado === 'EN_CURSO'
+                const productos = totalProductosViaje(v)
                 return (
                   <Link key={v.id} to={`/app/viajes/${v.id}`} className="block card p-3 active:bg-gray-50">
                     <div className="flex items-start justify-between gap-2">
@@ -191,9 +217,17 @@ export default function Viajes() {
                         </div>
                         <p className="text-xs text-gray-500 capitalize mt-0.5">{fmtCorto(v.fecha)}</p>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="font-black text-botella-900 text-sm"><span>{visitadas}</span>/{total}</p>
-                        <p className="text-[10px] uppercase text-gray-400">paradas</p>
+                      <div className="text-right shrink-0 flex gap-3">
+                        <div>
+                          <p className="font-black text-botella-900 text-sm"><span>{visitadas}</span>/{total}</p>
+                          <p className="text-[10px] uppercase text-gray-400">paradas</p>
+                        </div>
+                        {productos > 0 && (
+                          <div>
+                            <p className="font-black text-dorado-700 text-sm">{productos}</p>
+                            <p className="text-[10px] uppercase text-gray-400">u.</p>
+                          </div>
+                        )}
                       </div>
                     </div>
                     <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
@@ -213,6 +247,7 @@ export default function Viajes() {
                     <th className="px-4 py-3 text-left font-semibold">Título</th>
                     <th className="px-4 py-3 text-center font-semibold">Estado</th>
                     <th className="px-4 py-3 text-center font-semibold">Paradas</th>
+                    <th className="px-4 py-3 text-center font-semibold">Productos</th>
                     <th className="px-4 py-3 text-left font-semibold">Progreso</th>
                     <th className="px-4 py-3"></th>
                   </tr>
@@ -222,6 +257,7 @@ export default function Viajes() {
                     const visitadas = v.paradas.filter(p => p.estado === 'VISITADA').length
                     const total = v.paradas.length
                     const enCurso = v.estado === 'EN_CURSO'
+                    const productos = totalProductosViaje(v)
                     return (
                       <tr key={v.id} className={`border-t border-gray-100 hover:bg-gray-50 transition ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
                         <td className="px-4 py-3 text-gray-700 capitalize whitespace-nowrap">{fmt(v.fecha)}</td>
@@ -233,6 +269,13 @@ export default function Viajes() {
                         </td>
                         <td className="px-4 py-3 text-center text-gray-700">
                           <span className="font-bold text-botella-900">{visitadas}</span>/{total}
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          {productos > 0 ? (
+                            <span className="chip bg-dorado-100 text-dorado-800">📦 {productos} u.</span>
+                          ) : (
+                            <span className="text-gray-300 text-xs">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 w-48">
                           <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">

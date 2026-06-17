@@ -246,10 +246,21 @@ export const viajesAPI = {
   byId(id: number): Viaje | null {
     return load<Viaje>(K.viajes).find(v => v.id === id) ?? null
   },
-  create(data: { fecha: string; titulo?: string; notas?: string; clienteIds: number[] }): Viaje {
+  create(data: {
+    fecha: string;
+    titulo?: string;
+    notas?: string;
+    clienteIds?: number[];
+    /** Cantidades de productos por cliente, en el mismo orden que clienteIds. Opcional. */
+    cantidades?: number[];
+    /** Si está seteado, ignora el desglose por cliente y registra esa cantidad total. */
+    cantidadTotalManual?: number | null;
+  }): Viaje {
     const list = load<Viaje>(K.viajes)
+    const ids = data.clienteIds ?? []
+    const cants = data.cantidades ?? []
     const paradas: Parada[] = []
-    data.clienteIds.forEach((cId, i) => {
+    ids.forEach((cId, i) => {
       const cliente = clientesAPI.byId(cId)
       if (!cliente) return
       paradas.push({
@@ -259,6 +270,7 @@ export const viajesAPI = {
         estado: 'PENDIENTE',
         notas: null,
         horaVisita: null,
+        cantidadProductos: Number(cants[i] ?? 0),
       })
     })
 
@@ -271,12 +283,13 @@ export const viajesAPI = {
       inicio: nowISO(),
       fin: null,
       paradas,
+      cantidadTotalManual: data.cantidadTotalManual ?? null,
     }
     list.push(nuevo)
     save(K.viajes, list)
     return nuevo
   },
-  update(id: number, data: Partial<Pick<Viaje, 'titulo' | 'notas' | 'fecha'>>): Viaje | null {
+  update(id: number, data: Partial<Pick<Viaje, 'titulo' | 'notas' | 'fecha' | 'cantidadTotalManual'>>): Viaje | null {
     const list = load<Viaje>(K.viajes)
     const idx = list.findIndex(v => v.id === id)
     if (idx === -1) return null
@@ -291,16 +304,20 @@ export const viajesAPI = {
     save(K.viajes, load<Viaje>(K.viajes).filter(v => v.id !== id))
   },
   // PARADAS
-  agregarParada(viajeId: number, clienteId: number): Parada | null {
+  agregarParada(viajeId: number, clienteId: number, cantidadProductos = 0): Parada | null {
     const cliente = clientesAPI.byId(clienteId)
     if (!cliente) return null
     return viajesAPI._update(viajeId, v => {
       const orden = v.paradas.reduce((max, p) => Math.max(max, p.orden), 0) + 1
-      const nueva: Parada = { id: nextId(), cliente, orden, estado: 'PENDIENTE', notas: null, horaVisita: null }
+      const nueva: Parada = {
+        id: nextId(), cliente, orden, estado: 'PENDIENTE',
+        notas: null, horaVisita: null,
+        cantidadProductos: Number(cantidadProductos) || 0,
+      }
       return { ...v, paradas: [...v.paradas, nueva] }
     })?.paradas.slice(-1)[0] ?? null
   },
-  updateParada(paradaId: number, data: { estado?: string; notas?: string; orden?: number }): Parada | null {
+  updateParada(paradaId: number, data: { estado?: string; notas?: string; orden?: number; cantidadProductos?: number }): Parada | null {
     const list = load<Viaje>(K.viajes)
     for (const v of list) {
       const idx = v.paradas.findIndex(p => p.id === paradaId)
@@ -314,6 +331,7 @@ export const viajesAPI = {
       }
       if (data.notas !== undefined) p.notas = data.notas
       if (data.orden !== undefined) p.orden = data.orden
+      if (data.cantidadProductos !== undefined) p.cantidadProductos = Number(data.cantidadProductos) || 0
       save(K.viajes, list)
       return p
     }
@@ -417,7 +435,7 @@ export async function handleRequest(
   m = P.match(/^\/viajes\/(\d+)\/finalizar$/)
   if (M === 'PUT' && m) return viajesAPI.finalizar(Number(m[1]))
   m = P.match(/^\/viajes\/(\d+)\/paradas$/)
-  if (M === 'POST' && m) return viajesAPI.agregarParada(Number(m[1]), body.clienteId)
+  if (M === 'POST' && m) return viajesAPI.agregarParada(Number(m[1]), body.clienteId, body.cantidadProductos)
   m = P.match(/^\/viajes\/paradas\/(\d+)$/)
   if (m) {
     const id = Number(m[1])

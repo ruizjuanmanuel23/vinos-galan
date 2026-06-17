@@ -7,11 +7,18 @@ export default function NuevoViaje() {
   const [diaSel, setDiaSel] = useState<DiaSemana | 'TODOS'>(diaSemanaHoy())
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [seleccionados, setSeleccionados] = useState<number[]>([])
+  /** Mapa clienteId → cantidad de productos para ese cliente */
+  const [cantidades, setCantidades] = useState<Record<number, number>>({})
   const [fecha, setFecha] = useState(new Date().toISOString().split('T')[0])
   const [titulo, setTitulo] = useState('')
   const [notas, setNotas] = useState('')
   const [busq, setBusq] = useState('')
   const [loading, setLoading] = useState(false)
+
+  // Modo manual: cantidad total a llevar sin desglose por cliente
+  const [modoManual, setModoManual] = useState(false)
+  const [cantidadManual, setCantidadManual] = useState('')
+
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -26,6 +33,11 @@ export default function NuevoViaje() {
   const toggle = (id: number) => setSeleccionados(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id])
   const seleccionadosObj = clientes.filter(c => seleccionados.includes(c.id))
 
+  const setCantidadCliente = (clienteId: number, valor: string) => {
+    const n = Math.max(0, Number(valor) || 0)
+    setCantidades(c => ({ ...c, [clienteId]: n }))
+  }
+
   const mover = (idx: number, dir: -1 | 1) => {
     const nuevo = [...seleccionados]
     const target = idx + dir
@@ -34,12 +46,21 @@ export default function NuevoViaje() {
     setSeleccionados(nuevo)
   }
 
+  // Total: si modoManual, lo manual; si no, suma de cantidades por cliente
+  const totalDesglosado = seleccionados.reduce((acc, id) => acc + (cantidades[id] || 0), 0)
+  const totalMostrado = modoManual ? (Number(cantidadManual) || 0) : totalDesglosado
+
   const crear = async () => {
     if (seleccionados.length === 0) return
     setLoading(true)
     try {
       const r = await api.post('/viajes', {
-        fecha, titulo: titulo || `Viaje ${new Date(fecha+'T00:00:00').toLocaleDateString('es-AR')}`, notas, clienteIds: seleccionados,
+        fecha,
+        titulo: titulo || `Viaje ${new Date(fecha+'T00:00:00').toLocaleDateString('es-AR')}`,
+        notas,
+        clienteIds: seleccionados,
+        cantidades: seleccionados.map(id => cantidades[id] || 0),
+        cantidadTotalManual: modoManual ? (Number(cantidadManual) || 0) : null,
       })
       navigate(`/app/viajes/${r.data.id}`)
     } finally { setLoading(false) }
@@ -50,7 +71,7 @@ export default function NuevoViaje() {
       <Link to="/app/viajes" className="text-botella-700 text-sm font-medium hover:underline">← Viajes</Link>
       <div>
         <h1 className="page-title">Nuevo viaje</h1>
-        <p className="page-subtitle">Armá un recorrido con los clientes que vas a visitar</p>
+        <p className="page-subtitle">Armá un recorrido con los clientes y la cantidad a llevar a cada uno</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
@@ -72,6 +93,54 @@ export default function NuevoViaje() {
             </div>
           </div>
 
+          {/* Modo de carga de cantidad */}
+          <div className="card p-4 sm:p-5">
+            <h2 className="font-bold text-gray-900 text-sm sm:text-base mb-3">Cantidad a llevar</h2>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setModoManual(false)}
+                className={`px-3 py-2.5 rounded-lg text-xs font-bold transition ${!modoManual ? 'bg-botella-700 text-white' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
+              >
+                Por cliente
+              </button>
+              <button
+                type="button"
+                onClick={() => setModoManual(true)}
+                className={`px-3 py-2.5 rounded-lg text-xs font-bold transition ${modoManual ? 'bg-botella-700 text-white' : 'bg-gray-100 text-gray-600 border border-gray-200'}`}
+              >
+                Total manual
+              </button>
+            </div>
+
+            {modoManual ? (
+              <div>
+                <label className="label">Cantidad total</label>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  className="input text-2xl font-black text-center"
+                  placeholder="0"
+                  value={cantidadManual}
+                  onChange={e => setCantidadManual(e.target.value)}
+                />
+                <p className="text-[11px] text-gray-500 mt-2">
+                  Cantidad total libre sin desglose por cliente. Útil cuando ya sabés cuánto cargás sin importar quién recibe qué.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-botella-50 border border-botella-200 rounded-lg p-3">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-bold text-botella-800 uppercase tracking-wide">Total desglosado</span>
+                  <span className="text-3xl font-black text-botella-900">{totalDesglosado}</span>
+                </div>
+                <p className="text-[11px] text-botella-600 mt-1">Suma de cantidades cargadas a cada cliente</p>
+              </div>
+            )}
+          </div>
+
+          {/* Paradas seleccionadas */}
           <div className="card p-4 sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-bold text-gray-900 text-sm sm:text-base">Paradas elegidas</h2>
@@ -82,21 +151,40 @@ export default function NuevoViaje() {
             ) : (
               <div className="space-y-1.5">
                 {seleccionadosObj.map((c, idx) => (
-                  <div key={c.id} className="flex items-center gap-2 bg-gray-50 rounded-lg p-2">
-                    <span className="w-6 h-6 rounded-full bg-botella-700 text-white text-xs font-black flex items-center justify-center shrink-0">{idx + 1}</span>
-                    <span className="text-sm font-medium text-gray-800 flex-1 truncate">{c.nombre}</span>
-                    <div className="flex gap-0.5 shrink-0">
-                      <button onClick={() => mover(idx, -1)} disabled={idx === 0} className="w-7 h-7 text-gray-400 hover:text-botella-700 disabled:opacity-30 text-sm">▲</button>
-                      <button onClick={() => mover(idx, 1)} disabled={idx === seleccionadosObj.length - 1} className="w-7 h-7 text-gray-400 hover:text-botella-700 disabled:opacity-30 text-sm">▼</button>
-                      <button onClick={() => toggle(c.id)} className="w-7 h-7 text-red-400 hover:text-red-600 text-sm">✕</button>
+                  <div key={c.id} className="bg-gray-50 rounded-lg p-2 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-6 h-6 rounded-full bg-botella-700 text-white text-xs font-black flex items-center justify-center shrink-0">{idx + 1}</span>
+                      <span className="text-sm font-medium text-gray-800 flex-1 truncate">{c.nombre}</span>
+                      <div className="flex gap-0.5 shrink-0">
+                        <button onClick={() => mover(idx, -1)} disabled={idx === 0} className="w-7 h-7 text-gray-400 hover:text-botella-700 disabled:opacity-30 text-sm">▲</button>
+                        <button onClick={() => mover(idx, 1)} disabled={idx === seleccionadosObj.length - 1} className="w-7 h-7 text-gray-400 hover:text-botella-700 disabled:opacity-30 text-sm">▼</button>
+                        <button onClick={() => toggle(c.id)} className="w-7 h-7 text-red-400 hover:text-red-600 text-sm">✕</button>
+                      </div>
                     </div>
+                    {!modoManual && (
+                      <div className="flex items-center gap-2 pl-8">
+                        <label className="text-[10px] uppercase tracking-wide font-bold text-gray-500 shrink-0">Cant.</label>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          min={0}
+                          placeholder="0"
+                          className="w-20 text-center text-sm font-bold bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:border-botella-500"
+                          value={cantidades[c.id] || ''}
+                          onChange={e => setCantidadCliente(c.id, e.target.value)}
+                        />
+                        <span className="text-[10px] text-gray-400">unidades</span>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
             )}
             {seleccionados.length > 0 && (
               <button onClick={crear} disabled={loading} className="w-full btn-dorado mt-4">
-                {loading ? 'Creando...' : `🚚 Crear viaje con ${seleccionados.length} parada${seleccionados.length !== 1 ? 's' : ''}`}
+                {loading
+                  ? 'Creando...'
+                  : `🚚 Crear viaje${totalMostrado > 0 ? ` · ${totalMostrado} u.` : ''}`}
               </button>
             )}
           </div>
@@ -127,21 +215,37 @@ export default function NuevoViaje() {
             {filtrados.map(c => {
               const sel = seleccionados.includes(c.id)
               return (
-                <button key={c.id} onClick={() => toggle(c.id)} className={`w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 active:bg-gray-50 transition ${sel ? 'bg-botella-50' : ''}`}>
-                  <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${sel ? 'bg-botella-700 border-botella-700' : 'border-gray-300'}`}>
-                    {sel && <span className="text-white text-xs leading-none">✓</span>}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-gray-900 truncate">{c.nombre}</p>
-                    <div className="flex gap-2 text-xs text-gray-500">
-                      {c.direccion && <span className="truncate">📍 {c.direccion}</span>}
+                <div key={c.id} className={`flex items-stretch transition ${sel ? 'bg-botella-50' : ''}`}>
+                  <button
+                    onClick={() => toggle(c.id)}
+                    className="flex-1 flex items-center gap-3 p-3 text-left hover:bg-gray-50 active:bg-gray-50 transition"
+                  >
+                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${sel ? 'bg-botella-700 border-botella-700' : 'border-gray-300'}`}>
+                      {sel && <span className="text-white text-xs leading-none">✓</span>}
                     </div>
-                  </div>
-                  <div className="flex gap-1 shrink-0">
-                    {c.diaReparto && <span className="chip bg-botella-100 text-botella-700">{DIA_LABEL[c.diaReparto].slice(0,3)}</span>}
-                    {c.zona && <span className="chip bg-dorado-100 text-dorado-800">{c.zona}</span>}
-                  </div>
-                </button>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm text-gray-900 truncate">{c.nombre}</p>
+                      <div className="flex gap-2 text-xs text-gray-500">
+                        {c.direccion && <span className="truncate">📍 {c.direccion}</span>}
+                      </div>
+                    </div>
+                  </button>
+                  {sel && !modoManual && (
+                    <div className="flex items-center gap-1.5 pr-3 shrink-0" onClick={e => e.stopPropagation()}>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        placeholder="0"
+                        className="w-16 text-center text-sm font-bold bg-white border border-botella-300 rounded px-2 py-1.5 focus:outline-none focus:border-botella-500"
+                        value={cantidades[c.id] || ''}
+                        onChange={e => setCantidadCliente(c.id, e.target.value)}
+                        onClick={e => e.stopPropagation()}
+                      />
+                      <span className="text-[10px] text-gray-500 uppercase tracking-wide font-bold">u.</span>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>

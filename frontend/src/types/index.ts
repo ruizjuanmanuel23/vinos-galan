@@ -75,6 +75,8 @@ export interface Parada {
   estado: EstadoParada
   notas: string | null
   horaVisita: string | null
+  /** Cantidad de unidades/cajas a llevarle a este cliente. Default 0. */
+  cantidadProductos: number
 }
 
 export interface Viaje {
@@ -86,6 +88,18 @@ export interface Viaje {
   inicio: string | null
   fin: string | null
   paradas: Parada[]
+  /**
+   * Si está seteado (>0), es la cantidad total cargada a mano para todo el viaje
+   * (ignora la suma de las paradas). Útil para cargar rápido sin desglosar por cliente.
+   * Si es null/undefined o 0, el total del viaje se calcula sumando las paradas.
+   */
+  cantidadTotalManual?: number | null
+}
+
+/** Cantidad total de productos a llevar en un viaje (manual o suma de paradas). */
+export function totalProductosViaje(v: Viaje): number {
+  if (v.cantidadTotalManual && v.cantidadTotalManual > 0) return v.cantidadTotalManual
+  return v.paradas.reduce((acc, p) => acc + (p.cantidadProductos || 0), 0)
 }
 
 export function diaSemanaHoy(): DiaSemana {
