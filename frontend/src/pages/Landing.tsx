@@ -254,6 +254,65 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* VIDEO BODEGA */}
+      <section className="relative py-24 bg-botella-950 overflow-hidden">
+        {/* Fondo decorativo con la foto del interior, blureada y oscurecida */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${IMG.interiorTanques})`, filter: 'blur(8px)' }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-botella-950 via-botella-950/80 to-botella-950" />
+
+        <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <p className="text-xs tracking-[0.3em] uppercase text-dorado-400 font-semibold mb-3">La bodega</p>
+            <h2 className="text-4xl sm:text-5xl font-black mb-4" style={{ fontFamily: 'Georgia, serif' }}>
+              Conocé la bodega Galán
+            </h2>
+            <p className="text-botella-300 max-w-2xl mx-auto">
+              Más de 80 años elaborando vinos en Mendoza. Tradición familiar,
+              tanques propios y viñedos al pie de la cordillera.
+            </p>
+          </div>
+
+          {/* Video con marco dorado */}
+          <div className="relative rounded-2xl overflow-hidden ring-2 ring-dorado-500/40 shadow-2xl shadow-dorado-500/20 bg-botella-950">
+            <video
+              src={IMG.videoBodega}
+              autoPlay
+              loop
+              muted
+              playsInline
+              preload="metadata"
+              poster={IMG.interiorTanques}
+              className="w-full aspect-video object-cover"
+            />
+            {/* Brillo decorativo en una esquina */}
+            <div className="absolute -top-4 -left-4 bg-dorado-500 text-botella-950 px-4 py-2 rounded-xl shadow-2xl pointer-events-none">
+              <div className="flex items-center gap-2 text-sm font-black">
+                <span className="w-2 h-2 rounded-full bg-emerald-700 animate-pulse" />
+                EN VIVO · MENDOZA
+              </div>
+            </div>
+          </div>
+
+          {/* Stats sobre la bodega */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-10">
+            {[
+              { n: '1942', l: 'Año de fundación' },
+              { n: '+80', l: 'Años de tradición' },
+              { n: '+15', l: 'Variedades' },
+              { n: '∞', l: 'Brindis compartidos' },
+            ].map(s => (
+              <div key={s.l} className="text-center bg-botella-900/40 backdrop-blur-sm border border-botella-800/60 rounded-xl py-4">
+                <div className="text-2xl sm:text-3xl font-black text-dorado-400" style={{ fontFamily: 'Georgia, serif' }}>{s.n}</div>
+                <div className="text-[10px] sm:text-xs text-botella-300 tracking-widest uppercase mt-1">{s.l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FEATURES */}
       <section className="py-24 bg-botella-950 relative overflow-hidden">
         <div

@@ -82,21 +82,33 @@ export const CATALOGO_DESTACADO: VinoDestacado[] = [
 ]
 
 /** URLs de imágenes de fondo (Unsplash) para el sitio público. */
+/**
+ * Fotos reales de la bodega Galán (Mendoza, sede industrial).
+ * Bajadas de bodegagalan.com.ar — el sitio oficial de la marca.
+ */
 export const IMG = {
-  heroVineyard: 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?auto=format&fit=crop&w=1920&q=80',
-  heroBarrels:  'https://images.unsplash.com/photo-1543007631-283050bb3e8c?auto=format&fit=crop&w=1920&q=80',
-  heroPour:     'https://images.unsplash.com/photo-1567696911980-2eed69a46042?auto=format&fit=crop&w=1920&q=80',
+  // === FOTOS REALES DE LA BODEGA ===
+  /** Viñedo de altura con la cordillera nevada de fondo. Hero principal. */
+  vinedoCordillera: '/bodega/vinedo-cordillera.png',
+  /** Pasillos interiores de la bodega industrial (barandas amarillas, tanques). */
+  interiorTanques: '/bodega/interior-tanques.jpg',
+  /** Fachada de la sede Galán con el cartel "Galán" y los cipreses. */
+  fachadaGalan: '/bodega/fachada-galan.jpg',
+  /** Video institucional Sin Fin de la bodega Galán (~9 MB, autoplay muted loop). */
+  videoBodega: '/bodega-galan.mp4',
+
+  // === ALIASES (para que el resto de la landing siga funcionando sin cambios masivos) ===
+  heroVineyard: '/bodega/vinedo-cordillera.png',
+  heroBarrels:  '/bodega/interior-tanques.jpg',
+  heroPour:     '/bodega/fachada-galan.jpg',
   glassRed:     'https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=1200&q=80',
   bottles:      'https://images.unsplash.com/photo-1547595628-c61a29f496f0?auto=format&fit=crop&w=1200&q=80',
-  cellar:       'https://images.unsplash.com/photo-1543007631-283050bb3e8c?auto=format&fit=crop&w=1200&q=80',
-  grapes:       'https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=1200&q=80',
-  vineyardSunset: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=1920&q=80',
-  // Imágenes para los 3 features de la Landing
-  delivery: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
-  vineyardRows: 'https://images.unsplash.com/photo-1474722883778-792e7990302f?auto=format&fit=crop&w=800&q=80',
-  toast: 'https://images.unsplash.com/photo-1527271982979-83fea3eb3582?auto=format&fit=crop&w=800&q=80',
-  // Imagen "histórica" — bodega antigua con barricas (se le aplica filtro sepia para look 1942)
-  historicalCellar: 'https://images.unsplash.com/photo-1543007631-283050bb3e8c?auto=format&fit=crop&w=900&q=80',
-  // Imagen flashera para sección "App móvil" — mano con celular en ambiente de vino
+  cellar:       '/bodega/interior-tanques.jpg',
+  grapes:       '/bodega/vinedo-cordillera.png',
+  vineyardSunset: '/bodega/fachada-galan.jpg',
+  delivery: '/bodega/fachada-galan.jpg',
+  vineyardRows: '/bodega/vinedo-cordillera.png',
+  toast: '/bodega/interior-tanques.jpg',
+  historicalCellar: '/bodega/fachada-galan.jpg',
   phoneWine: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?auto=format&fit=crop&w=900&q=80',
 }
