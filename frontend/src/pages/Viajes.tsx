@@ -238,7 +238,7 @@ export default function Viajes() {
 
   // ====== RENDER ======
   return (
-    <div className="space-y-4 pb-32">
+    <div className="space-y-4 pb-48 lg:pb-32">
       {/* HEADER + Fecha */}
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
@@ -496,37 +496,48 @@ export default function Viajes() {
         </div>
       </div>
 
-      {/* CARGA DEL CAMIÓN — resumen visual */}
+      {/* CARGA DEL CAMIÓN — destacado visual */}
       {cargaAgregada.length > 0 && (
-        <div className="card overflow-hidden border-l-4 border-dorado-500">
-          <div className="bg-gradient-to-r from-botella-50 to-dorado-50 px-4 py-3 border-b border-gray-100 flex items-center justify-between flex-wrap gap-2">
-            <h2 className="text-sm font-black text-botella-900 flex items-center gap-2">
-              <Icon name="truck" className="w-5 h-5 text-botella-700" />
-              Camión cargado
-            </h2>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl font-black text-botella-900">{totalUnidades} u.</span>
+        <div className="card overflow-hidden ring-2 ring-dorado-500/50 shadow-xl shadow-dorado-500/20">
+          <div className="bg-gradient-to-br from-botella-700 via-botella-800 to-botella-900 px-5 py-4 text-white relative overflow-hidden">
+            {/* Decoración de fondo: ícono gigante semi-transparente */}
+            <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+              <Icon name="truck" className="w-32 h-32 text-dorado-300" strokeWidth={1.5} />
+            </div>
+            <div className="relative flex items-start justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-dorado-500 text-botella-950 flex items-center justify-center shadow-lg">
+                  <Icon name="truck" className="w-7 h-7" strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-[10px] tracking-[0.25em] uppercase text-dorado-300 font-bold">Camión cargado</p>
+                  <h2 className="text-2xl font-black text-white leading-none mt-0.5">
+                    {totalUnidades} <span className="text-base font-bold text-dorado-200">unidades</span>
+                  </h2>
+                  <p className="text-xs text-botella-200 mt-1">{cargaAgregada.length} producto{cargaAgregada.length !== 1 ? 's' : ''} distinto{cargaAgregada.length !== 1 ? 's' : ''}</p>
+                </div>
+              </div>
               <button
                 onClick={limpiarViaje}
-                className="text-xs text-gray-500 hover:text-red-600 hover:underline"
+                className="text-xs text-dorado-300 hover:text-white bg-white/10 hover:bg-white/20 px-3 py-1.5 rounded-lg font-bold transition"
               >Limpiar</button>
             </div>
           </div>
-          <div className="p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+          <div className="p-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 bg-gradient-to-b from-dorado-50/40 to-white">
             {cargaAgregada.map(c => {
               const insuficiente = c.cantidad > c.stock
               return (
-                <div key={c.vinoId} className={`flex items-center gap-2 rounded-lg p-2 border ${insuficiente ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
-                  <div className="w-9 h-9 rounded overflow-hidden bg-white border border-gray-200 shrink-0 flex items-center justify-center">
+                <div key={c.vinoId} className={`flex items-center gap-2 rounded-lg p-2 border ${insuficiente ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-white'} shadow-sm`}>
+                  <div className="w-10 h-10 rounded overflow-hidden bg-white border border-gray-200 shrink-0 flex items-center justify-center">
                     {c.fotoUrl
                       ? <img src={c.fotoUrl} alt={c.nombre} className="w-full h-full object-cover" />
-                      : <Icon name="wine-bottle" className="w-4 h-4 text-gray-300" />}
+                      : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-xs text-gray-900 truncate">{c.nombre}</p>
                     <p className={`text-[10px] ${insuficiente ? 'text-red-600 font-bold' : 'text-gray-500'}`}>Stock: {c.stock}</p>
                   </div>
-                  <span className={`font-black text-base ${insuficiente ? 'text-red-600' : 'text-botella-800'}`}>{c.cantidad}</span>
+                  <span className={`font-black text-lg ${insuficiente ? 'text-red-600' : 'text-botella-800'}`}>{c.cantidad}</span>
                 </div>
               )
             })}
@@ -731,33 +742,47 @@ export default function Viajes() {
         )}
       </section>
 
-      {/* STICKY BOTTOM: crear viaje */}
+      {/* STICKY BOTTOM: crear viaje
+          ↳ En mobile va arriba del bottom nav del Layout (que mide ~64px + safe area).
+          ↳ En desktop va al borde con left-64 (alto del sidebar). */}
       {hayAlgoEnViaje && (
-        <div className="fixed bottom-0 left-0 right-0 lg:left-64 z-30 bg-white border-t-2 border-botella-200 shadow-2xl">
-          <div className="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-3">
+        <div
+          className="fixed left-0 right-0 lg:left-64 z-40 bg-gradient-to-r from-white via-dorado-50 to-white border-t-4 border-dorado-500 shadow-[0_-8px_30px_rgba(0,0,0,0.18)]"
+          style={{ bottom: 'calc(64px + env(safe-area-inset-bottom))' }}
+        >
+          {/* En desktop, override del bottom para que vaya al fondo */}
+          <style>{`@media (min-width: 1024px) { .viaje-sticky-cta { bottom: 0 !important; } }`}</style>
+          <div className="viaje-sticky-cta max-w-7xl mx-auto px-4 py-3 sm:py-4 flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[10px] text-gray-500 uppercase tracking-wide font-bold">
+              <p className="text-[10px] text-gray-600 uppercase tracking-wide font-black">
                 Viaje del {new Date(fecha + 'T00:00:00').toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
               </p>
               <p className="text-lg sm:text-2xl font-black text-botella-900 leading-none">
-                {clientesEnViaje.length} cliente{clientesEnViaje.length !== 1 ? 's' : ''} · {totalUnidades} u.
+                {clientesEnViaje.length} cli · {totalUnidades} u.
               </p>
               {totalExtras > 0 && (
-                <p className="text-[10px] text-gray-500 mt-0.5">incluye {totalExtras} extra{totalExtras !== 1 ? 's' : ''}</p>
+                <p className="text-[10px] text-gray-500 mt-0.5">+{totalExtras} extra{totalExtras !== 1 ? 's' : ''}</p>
               )}
             </div>
             <button
               onClick={crearViaje}
               disabled={loading}
-              className="px-5 sm:px-8 py-3.5 sm:py-4 rounded-xl bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black text-sm sm:text-base shadow-lg disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition flex items-center gap-2"
+              className="px-5 sm:px-10 py-4 sm:py-5 rounded-2xl bg-gradient-to-br from-dorado-400 to-dorado-600 hover:from-dorado-300 hover:to-dorado-500 text-botella-950 font-black text-base sm:text-lg shadow-xl shadow-dorado-500/40 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95 transition flex items-center gap-2 ring-2 ring-dorado-300/50 animate-pulse-soft"
+              style={{ animation: loading ? 'none' : 'pulse-glow 2s ease-in-out infinite' }}
             >
               {loading ? 'Creando...' : (
                 <>
-                  <Icon name="truck" className="w-5 h-5" strokeWidth={2.5} />
-                  Crear viaje
+                  <Icon name="check" className="w-6 h-6" strokeWidth={3} />
+                  CREAR VIAJE
                 </>
               )}
             </button>
+            <style>{`
+              @keyframes pulse-glow {
+                0%, 100% { box-shadow: 0 8px 24px rgba(217, 167, 51, 0.4); }
+                50% { box-shadow: 0 8px 32px rgba(217, 167, 51, 0.7); }
+              }
+            `}</style>
           </div>
         </div>
       )}
