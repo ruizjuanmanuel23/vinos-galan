@@ -2,25 +2,16 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { CATALOGO_DESTACADO, IMG } from '../data/catalogoDestacado'
 import { vinosDB } from '../services/db'
-import { isAuth } from '../services/auth'
-import PasswordModal from '../components/PasswordModal'
 import Icon from '../components/Icon'
 import type { Vino } from '../types'
 
 export default function Landing() {
   const navigate = useNavigate()
-  const [pwdOpen, setPwdOpen] = useState(false)
   const [vinosCargados, setVinosCargados] = useState<Vino[]>([])
 
   useEffect(() => {
     vinosDB.listActivos().then(vs => setVinosCargados(vs.filter(v => v.mostrarEnCatalogo !== false && v.stock > 0))).catch(() => {})
   }, [])
-
-  const handleApk = (e: React.MouseEvent) => {
-    if (isAuth()) return // deja el download nativo
-    e.preventDefault()
-    setPwdOpen(true)
-  }
 
   // Si la app se abre desde el ícono instalado (APK / PWA standalone), saltea la landing
   useEffect(() => {
@@ -47,13 +38,6 @@ export default function Landing() {
 
   return (
     <div className="text-white">
-      <PasswordModal
-        open={pwdOpen}
-        onClose={() => setPwdOpen(false)}
-        onSuccess={() => { window.location.href = '/vinos-galan.apk' }}
-        title="Descarga de la app"
-        subtitle="Ingresá la clave para descargar el APK"
-      />
       {/* HERO */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Imagen de fondo */}
@@ -359,60 +343,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* CTA DESCARGAR APP */}
-      <section className="py-24 bg-gradient-to-br from-dorado-500/10 via-botella-950 to-botella-900 relative overflow-hidden">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <p className="text-xs tracking-[0.3em] uppercase text-dorado-400 font-semibold mb-3">App móvil</p>
-            <h2 className="text-3xl sm:text-5xl font-black mb-5 leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
-              Llevá Vinos Galán<br />en el bolsillo
-            </h2>
-            <p className="text-botella-200 leading-relaxed mb-8">
-              Instalá nuestra app en tu celular para ver el catálogo, hacer pedidos y mantenerte
-              al día con las novedades. Funciona sin conexión y se actualiza sola.
-            </p>
-            <a
-              href="/vinos-galan.apk"
-              download
-              onClick={handleApk}
-              className="inline-flex items-center gap-3 px-7 py-4 rounded-xl bg-dorado-500 hover:bg-dorado-400 text-botella-950 font-black text-lg shadow-2xl hover:shadow-dorado-500/40 transition active:scale-[0.98]"
-            >
-              <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Descargar APK Android
-            </a>
-            <p className="text-xs text-botella-400 mt-3">4 MB · Firmada · Sin permisos extra</p>
-          </div>
-
-          <div className="relative">
-            <div className="aspect-[3/4] rounded-3xl overflow-hidden ring-1 ring-dorado-500/30 shadow-2xl bg-botella-950">
-              <img src={IMG.phoneWine} alt="App móvil de Vinos Galán" className="w-full h-full object-cover" />
-              {/* Overlay sutil de color para integrarla a la paleta */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-botella-950/40 via-transparent to-dorado-500/10 mix-blend-overlay pointer-events-none" />
-            </div>
-            <div className="absolute -top-4 -left-4 bg-botella-900 border border-dorado-500/50 px-4 py-2 rounded-xl shadow-2xl">
-              <div className="flex items-center gap-2 text-sm font-bold">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                Disponible ahora
-              </div>
-            </div>
-            {/* Mini badge inferior con número de descargas / disponibilidad */}
-            <div className="absolute -bottom-4 -right-4 bg-dorado-500 text-botella-950 px-4 py-2 rounded-xl shadow-2xl">
-              <div className="flex items-center gap-2">
-                <svg viewBox="0 0 24 24" className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                <span className="font-black text-sm">APK lista</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </div>
   )
 }
