@@ -12,6 +12,22 @@ import {
 const fmt = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
 const fmtCorto = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { day: '2-digit', month: 'short' })
 
+const DIA_POR_INDEX: DiaSemana[] = ['DOMINGO','LUNES','MARTES','MIERCOLES','JUEVES','VIERNES','SABADO']
+/** Devuelve la próxima fecha (incluido hoy) que cae en el día de la semana indicado. */
+function proximaFechaDelDia(dia: DiaSemana, desde = new Date()): string {
+  const objetivoIdx = DIA_POR_INDEX.indexOf(dia)
+  const hoyIdx = desde.getDay()
+  const diff = (objetivoIdx - hoyIdx + 7) % 7  // 0 = hoy, 1 = mañana, ..., 6 = en 6 días
+  const target = new Date(desde)
+  target.setDate(desde.getDate() + diff)
+  return target.toISOString().slice(0, 10)
+}
+/** Devuelve el DiaSemana correspondiente a una fecha YYYY-MM-DD. */
+function diaSemanaDeFecha(iso: string): DiaSemana {
+  const idx = new Date(iso + 'T00:00:00').getDay()
+  return DIA_POR_INDEX[idx]
+}
+
 /** Pedido: clienteId → vinoId → cantidad */
 type Pedido = Record<number, Record<number, number>>
 /** Extras del viaje: vinoId → cantidad (productos sueltos sin cliente) */
@@ -29,6 +45,19 @@ export default function Viajes() {
   const [extras, setExtras] = useState<Extras>({})
   const [clienteActivoId, setClienteActivoId] = useState<number | null>(null)
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
+
+  // Sincronización día↔fecha
+  const elegirDia = (d: DiaSemana) => {
+    setDiaSel(d)
+    setFecha(proximaFechaDelDia(d))
+    setClienteActivoId(null)
+  }
+  const elegirFecha = (nuevaFecha: string) => {
+    if (!nuevaFecha) return
+    setFecha(nuevaFecha)
+    setDiaSel(diaSemanaDeFecha(nuevaFecha))
+    setClienteActivoId(null)
+  }
   const [busqCli, setBusqCli] = useState('')
   const [busqVino, setBusqVino] = useState('')
   const [busqExtra, setBusqExtra] = useState('')
@@ -221,7 +250,7 @@ export default function Viajes() {
           <input
             type="date"
             value={fecha}
-            onChange={e => setFecha(e.target.value)}
+            onChange={e => elegirFecha(e.target.value)}
             className="input !py-1.5 text-sm w-auto"
           />
         </div>
@@ -236,7 +265,7 @@ export default function Viajes() {
             return (
               <button
                 key={d}
-                onClick={() => { setDiaSel(d); setClienteActivoId(null) }}
+                onClick={() => elegirDia(d)}
                 className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition flex items-center gap-2 border-2 ${
                   activo
                     ? 'bg-botella-700 text-white border-botella-700 shadow-md'
