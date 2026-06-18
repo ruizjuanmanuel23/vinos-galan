@@ -384,7 +384,7 @@ export default function Landing() {
               </svg>
               Descargar APK Android
             </a>
-            <p className="text-xs text-botella-400 mt-3">1.1 MB · Firmada · Sin permisos extra</p>
+            <p className="text-xs text-botella-400 mt-3">4 MB · Firmada · Sin permisos extra</p>
           </div>
 
           <div className="relative">

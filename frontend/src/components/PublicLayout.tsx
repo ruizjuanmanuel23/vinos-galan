@@ -183,7 +183,7 @@ export default function PublicLayout() {
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-white text-sm">📱 Descargar APK</p>
                       <p className="text-[11px] text-botella-300 mt-0.5">
-                        App Android · 1.1 MB · Requiere clave
+                        App Android · 4 MB · Requiere clave
                       </p>
                     </div>
                     <svg className="w-4 h-4 text-botella-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
