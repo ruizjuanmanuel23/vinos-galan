@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import api from '../api/axios'
 import Modal from '../components/Modal'
+import Icon from '../components/Icon'
 import {
   cargaDeCamion, totalProductosViaje, cantidadDeParada,
   type EstadoParada, type Viaje, type Parada, type Vino,
@@ -61,8 +62,11 @@ export default function DetalleViaje() {
 
   if (!viaje) return <p className="text-center text-gray-400 py-12">Cargando...</p>
 
-  const visitadas = viaje.paradas.filter(p => p.estado === 'VISITADA').length
-  const total = viaje.paradas.length
+  // Las paradas reales (clientes); la parada con cliente.id === -1 es la de "extras del camión"
+  const paradasReales = viaje.paradas.filter(p => p.cliente.id !== -1)
+  const paradaExtras = viaje.paradas.find(p => p.cliente.id === -1) ?? null
+  const visitadas = paradasReales.filter(p => p.estado === 'VISITADA').length
+  const total = paradasReales.length
   const progreso = total > 0 ? (visitadas / total) * 100 : 0
   const bloqueado = viaje.estado === 'FINALIZADO'
   const totalProductos = totalProductosViaje(viaje)
@@ -77,11 +81,15 @@ export default function DetalleViaje() {
         <div className="min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="page-title">{viaje.titulo ?? 'Viaje'}</h1>
-            <span className={`chip ${!bloqueado ? 'bg-dorado-100 text-dorado-800' : 'bg-gray-100 text-gray-600'}`}>
-              {!bloqueado ? '🚚 En curso' : '✓ Finalizado'}
+            <span className={`chip inline-flex items-center gap-1 ${!bloqueado ? 'bg-dorado-100 text-dorado-800' : 'bg-gray-100 text-gray-600'}`}>
+              {!bloqueado
+                ? <><Icon name="truck" className="w-3 h-3" />En curso</>
+                : <><Icon name="check" className="w-3 h-3" />Finalizado</>}
             </span>
             {viaje.cargado && (
-              <span className="chip bg-emerald-100 text-emerald-700">📦 Camión cargado</span>
+              <span className="chip bg-emerald-100 text-emerald-700 inline-flex items-center gap-1">
+                <Icon name="box" className="w-3 h-3" />Camión cargado
+              </span>
             )}
           </div>
           <p className="page-subtitle capitalize">{fmtFecha(viaje.fecha)}</p>
@@ -175,14 +183,14 @@ export default function DetalleViaje() {
         </div>
       </div>
 
-      {/* Paradas */}
+      {/* Paradas (clientes reales) */}
       <div>
         <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">Paradas ({total})</h2>
         {total === 0 ? (
           <p className="text-center text-gray-400 py-8">Sin paradas.</p>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-            {viaje.paradas.map((p, idx) => (
+            {paradasReales.map((p, idx) => (
               <ParadaCard
                 key={p.id}
                 parada={p}
@@ -196,6 +204,27 @@ export default function DetalleViaje() {
           </div>
         )}
       </div>
+
+      {/* Extras del camión (parada virtual sin cliente) */}
+      {paradaExtras && paradaExtras.items && paradaExtras.items.length > 0 && (
+        <div className="card overflow-hidden border-l-4 border-gray-400">
+          <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-black text-gray-800">📦 Extras del camión</h3>
+              <p className="text-[11px] text-gray-500">Productos sueltos cargados por las dudas, sin cliente asignado</p>
+            </div>
+            <span className="text-lg font-black text-gray-700">{paradaExtras.items.reduce((a, b) => a + b.cantidad, 0)} u.</span>
+          </div>
+          <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {paradaExtras.items.map(it => (
+              <div key={it.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
+                <span className="text-sm font-bold text-gray-800 truncate">{it.vinoNombre}</span>
+                <span className="font-black text-base text-botella-800 ml-2 shrink-0">×{it.cantidad}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* MODAL editar items de una parada */}
       <ModalEditarItems
@@ -284,10 +313,12 @@ function ParadaCard({ parada, numero, onEstado, onEditItems, onEliminar, bloquea
               <span className="chip bg-emerald-100 text-emerald-700 shrink-0">✓ {fmtHora(parada.horaVisita)}</span>
             )}
           </div>
-          {c.telefono && <a href={`tel:${c.telefono}`} className="block text-xs text-botella-600 mt-0.5 active:underline">📞 {c.telefono}</a>}
+          {c.telefono && <a href={`tel:${c.telefono}`} className="text-xs text-botella-600 mt-0.5 active:underline flex items-center gap-1"><Icon name="phone" className="w-3 h-3" />{c.telefono}</a>}
           {c.direccion && (
             <div className="text-xs text-gray-500 mt-0.5">
-              {dirGoogle ? <a href={dirGoogle} target="_blank" rel="noreferrer" className="active:underline hover:underline">📍 {c.direccion}</a> : <>📍 {c.direccion}</>}
+              {dirGoogle
+                ? <a href={dirGoogle} target="_blank" rel="noreferrer" className="active:underline hover:underline inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{c.direccion}</a>
+                : <span className="inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{c.direccion}</span>}
             </div>
           )}
         </div>
@@ -296,7 +327,7 @@ function ParadaCard({ parada, numero, onEstado, onEditItems, onEliminar, bloquea
       {/* Productos para este cliente */}
       <div className="mt-3 bg-botella-50/60 border border-botella-200 rounded-lg p-3">
         <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] uppercase tracking-wide font-bold text-botella-700">📦 Productos</span>
+          <span className="text-[10px] uppercase tracking-wide font-bold text-botella-700 inline-flex items-center gap-1"><Icon name="box" className="w-3 h-3" />Productos</span>
           <span className="text-lg font-black text-botella-900">{cantTotal} u.</span>
         </div>
         {items.length === 0 ? (
@@ -388,7 +419,7 @@ function ModalEditarItems({
 
         <input
           className="input"
-          placeholder="🔍 Buscar producto..."
+          placeholder="Buscar producto..."
           value={busq}
           onChange={e => setBusq(e.target.value)}
         />
@@ -404,7 +435,7 @@ function ModalEditarItems({
                   <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
                     {v.fotoUrl
                       ? <img src={v.fotoUrl} alt={v.nombre} className="w-full h-full object-cover" />
-                      : <span className="text-xl text-gray-300">🍷</span>}
+                      : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-gray-900 truncate">{v.nombre}</p>

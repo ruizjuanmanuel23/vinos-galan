@@ -328,6 +328,7 @@ export const viajesDB = {
     clienteIds?: number[];
     cantidades?: number[];
     paradas?: { clienteId: number; items?: { vinoId: number; cantidad: number }[] }[];
+    extras?: { vinoId: number; cantidad: number }[];
     cantidadTotalManual?: number | null;
   }): Promise<Viaje> {
     const paradas: Parada[] = []
@@ -367,6 +368,34 @@ export const viajesDB = {
           estado: 'PENDIENTE', notas: null, horaVisita: null,
           items: [],
           cantidadProductos: Number(cants[i] ?? 0),
+        })
+      }
+    }
+
+    // Productos "extra" sin cliente — parada virtual al final con cliente synthetic id=-1
+    if (input.extras && input.extras.length > 0) {
+      const items: ItemParada[] = []
+      for (const it of input.extras) {
+        if ((it.cantidad || 0) <= 0) continue
+        const v = await vinosDB.byId(it.vinoId)
+        items.push({
+          id: nextParadaId(),
+          vinoId: it.vinoId,
+          vinoNombre: v?.nombre ?? '—',
+          cantidad: Number(it.cantidad),
+        })
+      }
+      if (items.length > 0) {
+        const clienteExtras: Cliente = {
+          id: -1, nombre: 'Productos extra', telefono: '', direccion: '',
+          zona: null, diaReparto: null, notas: '', creadoEn: new Date().toISOString(),
+        }
+        paradas.push({
+          id: nextParadaId(),
+          cliente: clienteExtras, orden: paradas.length + 1,
+          estado: 'VISITADA', notas: null, horaVisita: null,
+          items,
+          cantidadProductos: items.reduce((a, b) => a + b.cantidad, 0),
         })
       }
     }

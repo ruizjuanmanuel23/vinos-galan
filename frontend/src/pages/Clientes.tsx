@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import api from '../api/axios'
 import { useRealtimeRefresh } from '../services/realtime'
 import Modal from '../components/Modal'
+import Icon from '../components/Icon'
 import {
   DIAS_SEMANA, DIA_LABEL, aplicarVariables, whatsappCliente,
   type Cliente, type DiaSemana, type PlantillaWhatsApp,
@@ -64,7 +65,10 @@ export default function Clientes() {
       </div>
 
       <div className="space-y-3">
-        <input className="input" placeholder="🔍 Buscar por nombre o teléfono..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+        <div className="relative">
+          <Icon name="search" className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input className="input !pl-9" placeholder="Buscar por nombre o teléfono..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+        </div>
         <div className="scroll-h">
           <div className="flex gap-1.5 w-max">
             <button onClick={() => setFiltroDia('TODOS')} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${filtroDia === 'TODOS' ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>Todos</button>
@@ -85,8 +89,8 @@ export default function Clientes() {
             <Link to={`/app/clientes/${c.id}`} className="flex items-start justify-between gap-2 flex-1 min-w-0 active:opacity-70">
               <div className="min-w-0 flex-1">
                 <p className="font-bold text-gray-900 truncate">{c.nombre}</p>
-                {c.telefono && <p className="text-xs text-gray-500 mt-0.5">📞 {c.telefono}</p>}
-                {c.direccion && <p className="text-xs text-gray-500 truncate">📍 {c.direccion}</p>}
+                {c.telefono && <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1"><Icon name="phone" className="w-3 h-3 shrink-0" />{c.telefono}</p>}
+                {c.direccion && <p className="text-xs text-gray-500 truncate flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3 shrink-0" />{c.direccion}</p>}
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
                 {c.diaReparto && <span className="chip bg-botella-100 text-botella-700">{DIA_LABEL[c.diaReparto].slice(0, 3)}</span>}

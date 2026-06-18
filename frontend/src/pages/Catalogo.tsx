@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { CATALOGO_DESTACADO, IMG } from '../data/catalogoDestacado'
 import { vinosDB } from '../services/db'
 import { whatsappLink } from '../data/config'
+import Icon from '../components/Icon'
 import type { Vino } from '../types'
 
 interface ItemCatalogo {
@@ -174,13 +175,14 @@ export default function Catalogo() {
         {/* Filtros sticky */}
         <div className="bg-botella-950/95 backdrop-blur-md border-b border-botella-800 sticky top-16 sm:top-20 z-30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center">
-            <div className="flex-1">
+            <div className="flex-1 relative">
+              <Icon name="search" className="w-4 h-4 text-botella-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="🔍 Buscar vino, varietal o bodega..."
+                placeholder="Buscar vino, varietal o bodega..."
                 value={busq}
                 onChange={e => setBusq(e.target.value)}
-                className="w-full bg-botella-800/50 border border-botella-700 rounded-lg px-4 py-2 text-sm text-white placeholder-botella-400 focus:outline-none focus:border-dorado-400 transition"
+                className="w-full bg-botella-800/50 border border-botella-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white placeholder-botella-400 focus:outline-none focus:border-dorado-400 transition"
               />
             </div>
             <div className="flex gap-1.5 overflow-x-auto scrollbar-none -mx-1 px-1">

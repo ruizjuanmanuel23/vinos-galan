@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import Icon from '../components/Icon'
 import {
   statsAPI,
   type ResumenDia, type RankingCliente, type RankingProducto,
@@ -59,8 +60,9 @@ export default function Resumen() {
             {esHoy ? 'Hoy' : new Date(diaSel + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </h2>
           {dia && dia.viajesEnCurso > 0 && (
-            <Link to="/app/viajes" className="text-xs text-dorado-700 font-bold hover:underline">
-              🚚 {dia.viajesEnCurso} viaje{dia.viajesEnCurso !== 1 ? 's' : ''} en curso →
+            <Link to="/app/viajes" className="text-xs text-dorado-700 font-bold hover:underline inline-flex items-center gap-1">
+              <Icon name="truck" className="w-3.5 h-3.5" />
+              {dia.viajesEnCurso} viaje{dia.viajesEnCurso !== 1 ? 's' : ''} en curso →
             </Link>
           )}
         </div>
@@ -132,7 +134,7 @@ export default function Resumen() {
         {/* TOP CLIENTES */}
         <div className="card overflow-hidden">
           <div className="px-5 py-4 bg-gradient-to-r from-botella-50 to-white border-b border-gray-100">
-            <h3 className="font-black text-gray-900 text-sm sm:text-base">🏆 Mejores clientes</h3>
+            <h3 className="font-black text-gray-900 text-sm sm:text-base flex items-center gap-2"><Icon name="award" className="w-4 h-4 text-dorado-600" />Mejores clientes</h3>
             <p className="text-xs text-gray-500">Más gastaron en los últimos {periodo} días</p>
           </div>
           <div className="divide-y divide-gray-100">
@@ -159,7 +161,7 @@ export default function Resumen() {
         {/* TOP PRODUCTOS */}
         <div className="card overflow-hidden">
           <div className="px-5 py-4 bg-gradient-to-r from-dorado-50 to-white border-b border-gray-100">
-            <h3 className="font-black text-gray-900 text-sm sm:text-base">🍷 Productos más vendidos</h3>
+            <h3 className="font-black text-gray-900 text-sm sm:text-base flex items-center gap-2"><Icon name="wine-bottle" className="w-4 h-4 text-botella-700" />Productos más vendidos</h3>
             <p className="text-xs text-gray-500">Por unidades en los últimos {periodo} días</p>
           </div>
           <div className="divide-y divide-gray-100">
@@ -176,7 +178,7 @@ export default function Resumen() {
                 <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                   {tp.vino.fotoUrl
                     ? <img src={tp.vino.fotoUrl} alt={tp.vino.nombre} className="w-full h-full object-cover" />
-                    : <span className="text-base text-gray-300">🍷</span>}
+                    : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm text-gray-900 truncate">{tp.vino.nombre}</p>
@@ -195,7 +197,7 @@ export default function Resumen() {
       {/* STOCK CRÍTICO */}
       {stockBajo.length > 0 && (
         <section>
-          <h2 className="text-base sm:text-lg font-black text-botella-900 mb-3">⚠ Stock crítico</h2>
+          <h2 className="text-base sm:text-lg font-black text-botella-900 mb-3 flex items-center gap-2"><Icon name="alert" className="w-5 h-5 text-amber-600" />Stock crítico</h2>
           <div className="card overflow-hidden">
             <div className="divide-y divide-gray-100">
               {stockBajo.map(v => (
@@ -203,7 +205,7 @@ export default function Resumen() {
                   <div className="w-10 h-10 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                     {v.fotoUrl
                       ? <img src={v.fotoUrl} alt={v.nombre} className="w-full h-full object-cover" />
-                      : <span className="text-base text-gray-300">🍷</span>}
+                      : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-sm text-gray-900 truncate">{v.nombre}</p>

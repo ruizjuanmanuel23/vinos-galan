@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import api from '../api/axios'
 import { useRealtimeRefresh } from '../services/realtime'
 import Modal from '../components/Modal'
+import Icon from '../components/Icon'
 import { comprimirImagen, tamañoKb } from '../utils/imagen'
 import type { Vino } from '../types'
 
@@ -99,7 +100,10 @@ export default function Vinos() {
       </div>
 
       <div className="space-y-3">
-        <input className="input" placeholder="🔍 Buscar nombre, bodega o varietal..." value={busq} onChange={e => setBusq(e.target.value)} />
+        <div className="relative">
+          <Icon name="search" className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input className="input !pl-9" placeholder="Buscar nombre, bodega o varietal..." value={busq} onChange={e => setBusq(e.target.value)} />
+        </div>
         <div className="flex gap-1.5">
           {(['activos', 'todos'] as const).map(f => (
             <button key={f} onClick={() => setFiltro(f)} className={`px-3 py-1.5 rounded-full text-xs font-bold ${filtro === f ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>
@@ -120,7 +124,7 @@ export default function Vinos() {
                 {v.fotoUrl ? (
                   <img src={v.fotoUrl} alt={v.nombre} className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-2xl text-gray-300">🍷</span>
+                  <Icon name="wine-bottle" className="w-6 h-6 text-gray-300" />
                 )}
               </div>
               <div className="min-w-0 flex-1">
@@ -177,7 +181,7 @@ export default function Vinos() {
                     <div className="w-12 h-12 mx-auto rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                       {v.fotoUrl
                         ? <img src={v.fotoUrl} alt={v.nombre} className="w-full h-full object-cover" />
-                        : <span className="text-lg text-gray-300">🍷</span>}
+                        : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
                     </div>
                   </td>
                   <td className="px-4 py-3 font-semibold text-gray-900">{v.nombre}</td>
@@ -221,7 +225,7 @@ export default function Vinos() {
                 {form.fotoUrl ? (
                   <img src={form.fotoUrl} alt="Vista previa" className="w-full h-full object-cover" />
                 ) : (
-                  <span className="text-3xl text-gray-300">🍷</span>
+                  <Icon name="wine-bottle" className="w-8 h-8 text-gray-300" />
                 )}
               </div>
               <div className="flex-1 space-y-2">

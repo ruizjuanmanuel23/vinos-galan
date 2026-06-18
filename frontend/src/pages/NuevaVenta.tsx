@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../api/axios'
+import Icon from '../components/Icon'
 import type { Cliente, Vino } from '../types'
 
 interface Item { vino: Vino; cantidad: number }
@@ -121,7 +122,10 @@ export default function NuevaVenta() {
           </div>
         ) : (
           <div>
-            <input className="input mb-2" placeholder="🔍 Buscar cliente..." value={busqCliente} onChange={e => setBusqCliente(e.target.value)} />
+            <div className="relative mb-2">
+              <Icon name="search" className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input className="input !pl-8" placeholder="Buscar cliente..." value={busqCliente} onChange={e => setBusqCliente(e.target.value)} />
+            </div>
             {clientes.length > 0 && (
               <div className="border border-gray-200 rounded-lg overflow-hidden divide-y divide-gray-100 max-h-56 overflow-y-auto">
                 {clientes.slice(0, 8).map(c => (
@@ -146,7 +150,10 @@ export default function NuevaVenta() {
             </span>
           )}
         </div>
-        <input className="input mb-3" placeholder="🔍 Buscar vino..." value={busqVino} onChange={e => setBusqVino(e.target.value)} />
+        <div className="relative mb-3">
+          <Icon name="search" className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input className="input !pl-8" placeholder="Buscar vino..." value={busqVino} onChange={e => setBusqVino(e.target.value)} />
+        </div>
 
         {vinosOrdenados.length === 0 ? (
           <p className="text-center text-sm text-gray-400 py-8">Sin vinos con stock.</p>
@@ -173,7 +180,7 @@ export default function NuevaVenta() {
                     <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center shrink-0">
                       {v.fotoUrl
                         ? <img src={v.fotoUrl} alt={v.nombre} className="w-full h-full object-cover" />
-                        : <span className="text-lg text-gray-300">🍷</span>}
+                        : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="font-bold text-sm text-gray-900 truncate">{v.nombre}</p>

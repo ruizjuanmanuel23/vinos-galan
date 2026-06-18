@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import api from '../api/axios'
 import Modal from '../components/Modal'
+import Icon from '../components/Icon'
 import { ClienteForm } from './Clientes'
 import {
   DIA_LABEL, aplicarVariables, whatsappCliente,
@@ -95,7 +96,7 @@ export default function ClienteFicha() {
           <h1 className="page-title truncate">{cliente.nombre}</h1>
           <div className="flex gap-2 mt-2 flex-wrap">
             {cliente.diaReparto && <span className="chip bg-botella-100 text-botella-800">📅 {DIA_LABEL[cliente.diaReparto]}</span>}
-            {cliente.zona && <span className="chip bg-dorado-100 text-dorado-800">📍 {cliente.zona}</span>}
+            {cliente.zona && <span className="chip bg-dorado-100 text-dorado-800 inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{cliente.zona}</span>}
           </div>
         </div>
         <div className="flex gap-2">
@@ -190,8 +191,8 @@ export default function ClienteFicha() {
                   <p className="text-[10px] text-gray-500 uppercase">Dirección</p>
                   <p className="font-semibold text-gray-900">
                     {dirGoogle ? (
-                      <a href={dirGoogle} target="_blank" rel="noreferrer" className="text-botella-700 hover:underline">📍 {cliente.direccion}</a>
-                    ) : <>📍 {cliente.direccion}</>}
+                      <a href={dirGoogle} target="_blank" rel="noreferrer" className="text-botella-700 hover:underline inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{cliente.direccion}</a>
+                    ) : <span className="inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{cliente.direccion}</span>}
                   </p>
                 </div>
               )}

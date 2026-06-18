@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/axios'
 import { statsAPI, type ResumenDia } from '../services/stats'
+import Icon from '../components/Icon'
 import { diaSemanaHoy, DIA_LABEL, type Cliente, type Viaje } from '../types'
 
 const fmtPlata = (n: number) => '$' + n.toLocaleString('es-AR', { maximumFractionDigits: 0 })
@@ -64,7 +65,7 @@ export default function Inicio() {
               </p>
               <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 mt-1">
                 <span><strong className="text-botella-800">{viajeActivo.paradas.filter(p => p.estado === 'VISITADA').length}</strong>/{viajeActivo.paradas.length} paradas</span>
-                {viajeActivo.cargado && <span className="chip bg-emerald-100 text-emerald-700">📦 Cargado</span>}
+                {viajeActivo.cargado && <span className="chip bg-emerald-100 text-emerald-700 inline-flex items-center gap-1"><Icon name="box" className="w-3 h-3" />Cargado</span>}
               </div>
             </div>
             <span className="text-2xl text-botella-300 group-hover:text-botella-600 group-hover:translate-x-1 transition-all shrink-0">→</span>
@@ -138,7 +139,7 @@ export default function Inicio() {
             <h2 className="font-black text-gray-900 text-sm mb-3">Atajos</h2>
             <div className="grid grid-cols-1 gap-1.5">
               <Link to="/app/ventas/nueva" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-emerald-50 transition group">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-base group-hover:scale-110 transition">🛒</div>
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 group-hover:scale-110 transition"><Icon name="shopping-bag" className="w-4 h-4" /></div>
                 <div>
                   <p className="text-sm font-bold text-gray-900">Nueva venta</p>
                   <p className="text-[10px] text-gray-500">Descuenta stock</p>
@@ -152,7 +153,7 @@ export default function Inicio() {
                 </div>
               </Link>
               <Link to="/app/vinos" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dorado-50 transition group">
-                <div className="w-8 h-8 rounded-lg bg-dorado-100 flex items-center justify-center text-base group-hover:scale-110 transition">🍷</div>
+                <div className="w-8 h-8 rounded-lg bg-dorado-100 flex items-center justify-center text-dorado-800 group-hover:scale-110 transition"><Icon name="wine-bottle" className="w-4 h-4" /></div>
                 <div className="flex-1">
                   <p className="text-sm font-bold text-gray-900">Bodega</p>
                   <p className="text-[10px] text-gray-500">{stats.vinos} productos</p>
@@ -168,7 +169,7 @@ export default function Inicio() {
           {stats.stockBajo > 0 && (
             <Link to="/app/vinos" className="block card p-3 bg-red-50 border-red-200 hover:bg-red-100 transition">
               <div className="flex items-center gap-2">
-                <div className="text-xl">⚠</div>
+                <div className="text-amber-600"><Icon name="alert" className="w-5 h-5" /></div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-bold text-red-900">Stock crítico</p>
                   <p className="text-[10px] text-red-700">{stats.stockBajo} producto{stats.stockBajo !== 1 ? 's' : ''} para reponer</p>
