@@ -165,11 +165,85 @@ export default function Clientes() {
   )
 }
 
+/**
+ * Botón que abre el selector de contactos del celular y autocompleta nombre + teléfono.
+ *
+ * Usa la Contact Picker API (Chrome Android). En PC/iOS la API no existe.
+ * Si no está disponible muestra un mensaje claro.
+ */
+function BotonImportarContacto({ onImport }: { onImport: (nombre: string, telefono: string) => void }) {
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  // Feature detection: Contact Picker API solo existe en Chrome Android (y derivados)
+  const disponible = typeof navigator !== 'undefined'
+    && 'contacts' in navigator
+    && 'ContactsManager' in (window as any)
+
+  const importar = async () => {
+    setError(null)
+    if (!disponible) {
+      setError('Esta función solo funciona desde el celular. En la PC no hay acceso a la libreta de contactos.')
+      return
+    }
+    setLoading(true)
+    try {
+      const nav = navigator as any
+      const props = ['name', 'tel']
+      const contacts = await nav.contacts.select(props, { multiple: false })
+      if (!contacts || contacts.length === 0) {
+        setLoading(false)
+        return // el usuario canceló
+      }
+      const c = contacts[0]
+      const nombre = Array.isArray(c.name) && c.name[0] ? String(c.name[0]) : ''
+      const telefono = Array.isArray(c.tel) && c.tel[0] ? String(c.tel[0]) : ''
+      onImport(nombre, telefono)
+    } catch (e: any) {
+      setError('No se pudo abrir la libreta de contactos. ' + (e?.message ?? ''))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+          <svg viewBox="0 0 24 24" className="w-5 h-5 text-emerald-700" fill="currentColor">
+            <path d="M17.5 14.4c-.3-.1-1.7-.8-2-.9-.3-.1-.4-.1-.6.1-.2.3-.7.9-.8 1-.2.2-.3.2-.6.1-.3-.1-1.2-.4-2.3-1.4-.9-.8-1.4-1.7-1.6-2-.2-.3 0-.5.1-.6.1-.1.3-.3.4-.5.1-.2.2-.3.3-.5.1-.2 0-.4 0-.5l-.7-1.8c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 1.9 0 1.1.8 2.2 1 2.4.1.2 1.7 2.5 4 3.5.6.2 1 .4 1.4.5.6.2 1.1.2 1.5.1.5-.1 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1-.1-.1-.3-.1-.6-.2zm-5.4 7.2h0c-1.8 0-3.5-.5-5-1.4l-.4-.2-3.7 1 1-3.6-.2-.4c-1-1.6-1.5-3.4-1.5-5.2 0-5.5 4.5-10 10-10 2.7 0 5.2 1 7.1 2.9 1.9 1.9 2.9 4.4 2.9 7.1 0 5.5-4.5 9.8-10.2 9.8zM20.5 3.5C18.2 1.3 15.2 0 12.1 0 5.5 0 .1 5.4.1 12c0 2.1.6 4.2 1.6 6L0 24l6.2-1.6c1.7.9 3.7 1.4 5.7 1.4h0c6.6 0 12-5.4 12-12 0-3.2-1.3-6.2-3.4-8.3z" />
+          </svg>
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="font-bold text-emerald-900 text-sm">Importar de WhatsApp</p>
+          <p className="text-[11px] text-emerald-700">
+            {disponible
+              ? 'Elegí un contacto y se completan nombre y teléfono solos'
+              : 'Disponible solo desde el celular (APK)'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={importar}
+          disabled={loading}
+          className="px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs shrink-0 transition"
+        >
+          {loading ? 'Abriendo...' : 'Elegir contacto'}
+        </button>
+      </div>
+      {error && <p className="text-[11px] text-red-700 mt-2">{error}</p>}
+    </div>
+  )
+}
+
 export function ClienteForm({ form, setForm, onSubmit, onCancel }: {
   form: typeof EMPTY; setForm: React.Dispatch<React.SetStateAction<typeof EMPTY>>; onSubmit: () => void; onCancel: () => void
 }) {
   return (
     <div className="space-y-4">
+      <BotonImportarContacto onImport={(nombre, telefono) =>
+        setForm(f => ({ ...f, nombre: nombre || f.nombre, telefono: telefono || f.telefono }))
+      } />
       <div>
         <label className="label">Nombre *</label>
         <input className="input" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />

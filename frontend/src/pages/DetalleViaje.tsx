@@ -86,7 +86,8 @@ export default function DetalleViaje() {
           </div>
           <p className="page-subtitle capitalize">{fmtFecha(viaje.fecha)}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <BotonRutaMaps viaje={viaje} bloqueado={bloqueado} />
           {!bloqueado && <button onClick={finalizar} className="btn-primary text-xs sm:text-sm">Finalizar</button>}
           <button onClick={eliminar} className="btn-secondary !text-red-600 !border-red-300 text-xs sm:text-sm">Eliminar</button>
         </div>
@@ -204,6 +205,55 @@ export default function DetalleViaje() {
         onGuardar={items => paradaEdit && guardarItems(paradaEdit.id, items)}
       />
     </div>
+  )
+}
+
+/**
+ * Botón que arma una ruta en Google Maps con las direcciones de las paradas pendientes.
+ * Google Maps optimiza el recorrido y usa la ubicación actual como origen.
+ *
+ * Notas:
+ * - Solo agrega paradas PENDIENTES (las visitadas/omitidas se ignoran).
+ * - Última parada se usa como destino, el resto como waypoints.
+ * - Si no hay direcciones, el botón queda deshabilitado.
+ */
+function BotonRutaMaps({ viaje, bloqueado }: { viaje: Viaje; bloqueado: boolean }) {
+  if (bloqueado) return null
+
+  const paradasConDir = viaje.paradas
+    .filter(p => p.estado === 'PENDIENTE' && p.cliente.direccion?.trim())
+    .map(p => p.cliente.direccion.trim())
+
+  if (paradasConDir.length === 0) return null
+
+  const abrirRuta = () => {
+    // Agrega "La Plata" al final de cada dirección para que Maps no se confunda con calles homónimas
+    const dirs = paradasConDir.map(d => {
+      const tieneCiudad = /la plata/i.test(d) || /buenos aires/i.test(d)
+      return tieneCiudad ? d : `${d}, La Plata, Buenos Aires`
+    })
+    const destino = encodeURIComponent(dirs[dirs.length - 1])
+    const waypoints = dirs.slice(0, -1).map(encodeURIComponent).join('|')
+    const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${destino}&travelmode=driving`
+    const url = waypoints ? `${baseUrl}&waypoints=${waypoints}` : baseUrl
+    window.open(url, '_blank', 'noopener')
+  }
+
+  return (
+    <button
+      onClick={abrirRuta}
+      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow active:scale-95 transition"
+      title={`Abrir ruta con ${paradasConDir.length} parada${paradasConDir.length !== 1 ? 's' : ''} pendiente${paradasConDir.length !== 1 ? 's' : ''}`}
+    >
+      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z" />
+        <line x1="9" y1="4" x2="9" y2="18" />
+        <line x1="15" y1="6" x2="15" y2="20" />
+      </svg>
+      <span className="hidden sm:inline">Ruta en Maps</span>
+      <span className="sm:hidden">Maps</span>
+      <span className="text-[10px] font-black bg-white/20 rounded-full px-1.5 py-0.5">{paradasConDir.length}</span>
+    </button>
   )
 }
 
