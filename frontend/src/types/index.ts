@@ -18,7 +18,8 @@ export interface Cliente {
   telefono: string
   direccion: string
   zona: string | null
-  diaReparto: DiaSemana | null
+  /** Días de la semana en los que se le hace reparto. Puede tener varios. */
+  diasReparto: DiaSemana[]
   notas: string
   creadoEn: string
 }
@@ -167,7 +168,7 @@ export function aplicarVariables(texto: string, cliente: Cliente): string {
     .replace(/\{nombre\}/gi,    cliente.nombre || '')
     .replace(/\{direccion\}/gi, cliente.direccion || '')
     .replace(/\{zona\}/gi,      cliente.zona || '')
-    .replace(/\{dia\}/gi,       cliente.diaReparto ? DIA_LABEL[cliente.diaReparto].toLowerCase() : '')
+    .replace(/\{dia\}/gi,       cliente.diasReparto?.[0] ? DIA_LABEL[cliente.diasReparto[0]].toLowerCase() : '')
     .replace(/\{dia_hoy\}/gi,   diaSemana)
     .replace(/\{hora\}/gi,      hora)
 }

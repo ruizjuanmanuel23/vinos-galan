@@ -37,19 +37,21 @@ export default function Viajes() {
   // ====== DATOS ======
   const [viajes, setViajes] = useState<Viaje[]>([])
   const [bodega, setBodega] = useState<Vino[]>([])
+  const [todosClientes, setTodosClientes] = useState<Cliente[]>([])
   const [clientesPorDia, setClientesPorDia] = useState<Record<DiaSemana, Cliente[]>>({} as Record<DiaSemana, Cliente[]>)
 
   // ====== ESTADO DEL ARMADO DE VIAJE ======
-  const [diaSel, setDiaSel] = useState<DiaSemana>(diaSemanaHoy())
+  /** 'TODOS' muestra absolutamente todos los clientes cargados, sin filtrar por día. */
+  const [diaSel, setDiaSel] = useState<DiaSemana | 'TODOS'>(diaSemanaHoy())
   const [pedido, setPedido] = useState<Pedido>({})
   const [extras, setExtras] = useState<Extras>({})
   const [clienteActivoId, setClienteActivoId] = useState<number | null>(null)
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
 
   // Sincronización día↔fecha
-  const elegirDia = (d: DiaSemana) => {
+  const elegirDia = (d: DiaSemana | 'TODOS') => {
     setDiaSel(d)
-    setFecha(proximaFechaDelDia(d))
+    if (d !== 'TODOS') setFecha(proximaFechaDelDia(d))
     setClienteActivoId(null)
   }
   const elegirFecha = (nuevaFecha: string) => {
@@ -78,12 +80,18 @@ export default function Viajes() {
     if (tabla === 'vinos') cargarBodega()
   })
 
-  // Carga todos los clientes una sola vez y los agrupa por día
+  // Carga todos los clientes una sola vez y los agrupa por día.
+  // Un cliente puede aparecer en VARIOS días si tiene varios en diasReparto.
   const cargarClientesTodos = () => {
     api.get<Cliente[]>('/clientes').then(r => {
+      setTodosClientes(r.data)
       const map = {} as Record<DiaSemana, Cliente[]>
       for (const d of DIAS_SEMANA) map[d] = []
-      for (const c of r.data) if (c.diaReparto) map[c.diaReparto].push(c)
+      for (const c of r.data) {
+        for (const d of (c.diasReparto ?? [])) {
+          if (map[d]) map[d].push(c)
+        }
+      }
       setClientesPorDia(map)
     }).catch(() => {})
   }
@@ -93,7 +101,8 @@ export default function Viajes() {
   useEffect(() => { cargarBodega() }, [])
 
   // ====== HELPERS ======
-  const clientesDia = clientesPorDia[diaSel] ?? []
+  /** Clientes a mostrar en la columna izq: del día seleccionado, o TODOS los cargados. */
+  const clientesDia = diaSel === 'TODOS' ? todosClientes : (clientesPorDia[diaSel] ?? [])
 
   const clientesFiltrados = useMemo(() => {
     if (!busqCli.trim()) return clientesDia
@@ -110,15 +119,12 @@ export default function Viajes() {
   const clientesEnViaje = useMemo(() => {
     const ids = Object.keys(pedido).map(Number).filter(cId => cantidadCliente(cId) > 0)
     return ids
-      .map(cId => clientesDia.find(c => c.id === cId)
-        || Object.values(clientesPorDia).flat().find(c => c.id === cId))
+      .map(cId => todosClientes.find(c => c.id === cId))
       .filter((c): c is Cliente => Boolean(c))
-  }, [pedido, clientesDia, clientesPorDia])
+  }, [pedido, todosClientes])
 
   const clienteActivo = clienteActivoId
-    ? clientesDia.find(c => c.id === clienteActivoId)
-        ?? Object.values(clientesPorDia).flat().find(c => c.id === clienteActivoId)
-        ?? null
+    ? todosClientes.find(c => c.id === clienteActivoId) ?? null
     : null
 
   const pedidoActivo = clienteActivoId ? (pedido[clienteActivoId] ?? {}) : {}
@@ -226,7 +232,7 @@ export default function Viajes() {
         .filter(it => it.cantidad > 0)
       const r = await api.post<{ id: number }>('/viajes', {
         fecha,
-        titulo: `Recorrido ${DIA_LABEL[diaSel]} · ${fmtCorto(fecha)}`,
+        titulo: `Recorrido ${diaSel === 'TODOS' ? 'mixto' : DIA_LABEL[diaSel]} · ${fmtCorto(fecha)}`,
         paradas,
         extras: extrasInput,
       })
@@ -259,6 +265,20 @@ export default function Viajes() {
       {/* SELECTOR DE DÍA */}
       <div className="scroll-h">
         <div className="flex gap-1.5 w-max">
+          {/* Botón "TODOS" — muestra absolutamente todos los clientes cargados */}
+          <button
+            onClick={() => elegirDia('TODOS')}
+            className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition flex items-center gap-2 border-2 ${
+              diaSel === 'TODOS'
+                ? 'bg-dorado-500 text-botella-950 border-dorado-500 shadow-md'
+                : 'bg-white text-gray-700 border-gray-200 hover:border-dorado-400 active:bg-dorado-50'
+            }`}
+          >
+            Todos
+            <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
+              diaSel === 'TODOS' ? 'bg-botella-900/20 text-botella-900' : 'bg-gray-100 text-gray-500'
+            }`}>{todosClientes.length}</span>
+          </button>
           {DIAS_SEMANA.map(d => {
             const activo = diaSel === d
             const cant = (clientesPorDia[d] ?? []).length
@@ -291,7 +311,7 @@ export default function Viajes() {
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-black text-botella-900 text-sm sm:text-base flex items-center gap-2">
                 <Icon name="users" className="w-5 h-5 text-botella-700" />
-                Clientes · {DIA_LABEL[diaSel]}
+                Clientes · {diaSel === 'TODOS' ? 'todos' : DIA_LABEL[diaSel]}
               </h2>
               {clientesEnViaje.length > 0 && (
                 <span className="text-[10px] font-black text-white bg-botella-700 px-2 py-1 rounded-full">
@@ -315,7 +335,7 @@ export default function Viajes() {
                 <Icon name="inbox" className="w-10 h-10 text-gray-200 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-gray-500">
                   {clientesDia.length === 0
-                    ? `Sin clientes para ${DIA_LABEL[diaSel].toLowerCase()}`
+                    ? (diaSel === 'TODOS' ? 'No hay clientes cargados' : `Sin clientes para ${DIA_LABEL[diaSel].toLowerCase()}`)
                     : 'Sin resultados'}
                 </p>
                 {clientesDia.length === 0 && (

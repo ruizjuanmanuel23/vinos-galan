@@ -56,7 +56,7 @@ export const clientesAPI = {
   },
   byDia(dia: DiaSemana): Cliente[] {
     return load<Cliente>(K.clientes)
-      .filter(c => c.diaReparto === dia)
+      .filter(c => (c.diasReparto ?? []).includes(dia))
       .sort((a, b) => a.nombre.localeCompare(b.nombre))
   },
   byId(id: number): Cliente | null {
@@ -73,7 +73,7 @@ export const clientesAPI = {
       telefono: data.telefono ?? '',
       direccion: data.direccion ?? '',
       zona: data.zona ?? null,
-      diaReparto: (data.diaReparto ?? null) as Cliente['diaReparto'],
+      diasReparto: data.diasReparto ?? [],
       notas: data.notas ?? '',
       creadoEn: nowISO(),
     }
@@ -762,9 +762,9 @@ export function seedIfEmpty(): void {
   }
 
   if (load<Cliente>(K.clientes).length > 0) return
-  const c1 = clientesAPI.create({ nombre: 'Bar La Esquina',     telefono: '1144556677', direccion: 'San Martín 100',     zona: 'Centro', diaReparto: 'MARTES' })
-  const c2 = clientesAPI.create({ nombre: 'Restaurante El Pino', telefono: '1145678900', direccion: 'Av. Corrientes 1234', zona: 'Centro', diaReparto: 'JUEVES' })
-  clientesAPI.create({ nombre: 'Almacén Don José',  telefono: '1167890123', direccion: 'Belgrano 545',  zona: 'Sur',    diaReparto: 'MARTES' })
+  const c1 = clientesAPI.create({ nombre: 'Bar La Esquina',     telefono: '1144556677', direccion: 'San Martín 100',     zona: 'Centro', diasReparto: ['MARTES'] })
+  const c2 = clientesAPI.create({ nombre: 'Restaurante El Pino', telefono: '1145678900', direccion: 'Av. Corrientes 1234', zona: 'Centro', diasReparto: ['JUEVES'] })
+  clientesAPI.create({ nombre: 'Almacén Don José',  telefono: '1167890123', direccion: 'Belgrano 545',  zona: 'Sur',    diasReparto: ['MARTES'] })
   vinosAPI.create({ nombre: 'Malbec Reserva',  bodega: 'Trapiche',  varietal: 'Malbec',   precioVenta: 5500, precioCosto: 3200, stock: 24 })
   vinosAPI.create({ nombre: 'Cabernet Joven',  bodega: 'Norton',    varietal: 'Cabernet', precioVenta: 4200, precioCosto: 2400, stock: 18 })
   vinosAPI.create({ nombre: 'Chardonnay Crianza', bodega: 'Catena', varietal: 'Chardonnay', precioVenta: 6800, precioCosto: 4100, stock: 12 })

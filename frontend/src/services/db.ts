@@ -24,24 +24,36 @@ import type {
 // =============================================================
 
 function clienteFromRow(r: any): Cliente {
+  // Días: leer del nuevo campo dias_reparto (JSONB array). Si no existe (DB vieja),
+  // fallback al campo legacy dia_reparto (string singular) → array de 1.
+  let dias: any[] = []
+  if (Array.isArray(r.dias_reparto)) dias = r.dias_reparto
+  else if (typeof r.dias_reparto === 'string') {
+    try { const p = JSON.parse(r.dias_reparto); if (Array.isArray(p)) dias = p } catch { /* ignore */ }
+  }
+  if (dias.length === 0 && r.dia_reparto) dias = [r.dia_reparto]
   return {
     id: r.id,
     nombre: r.nombre,
     telefono: r.telefono ?? '',
     direccion: r.direccion ?? '',
     zona: r.zona ?? null,
-    diaReparto: r.dia_reparto ?? null,
+    diasReparto: dias.filter((d): d is any => typeof d === 'string'),
     notas: r.notas ?? '',
     creadoEn: r.creado_en,
   }
 }
 function clienteToRow(c: Partial<Cliente>) {
+  const dias = c.diasReparto ?? []
   return {
     nombre: c.nombre,
     telefono: c.telefono ?? '',
     direccion: c.direccion ?? '',
     zona: c.zona ?? null,
-    dia_reparto: c.diaReparto ?? null,
+    // Campo nuevo: array completo de días.
+    dias_reparto: dias,
+    // Campo legacy: mantenemos el primer día para compatibilidad con otras tools.
+    dia_reparto: dias[0] ?? null,
     notas: c.notas ?? '',
   }
 }
@@ -141,10 +153,12 @@ export const clientesDB = {
     return (data ?? []).map(clienteFromRow)
   },
   async byDia(dia: DiaSemana): Promise<Cliente[]> {
+    // Compatibilidad: matchea por dias_reparto (JSONB array, nuevo) O por dia_reparto (legacy).
+    // .cs = contains (para JSONB arrays). Si la columna nueva no existe en DB, el OR cae al campo viejo.
     const { data } = await supabase
       .from('clientes')
       .select('*')
-      .eq('dia_reparto', dia)
+      .or(`dia_reparto.eq.${dia},dias_reparto.cs.["${dia}"]`)
       .order('nombre')
     return (data ?? []).map(clienteFromRow)
   },
@@ -388,7 +402,7 @@ export const viajesDB = {
       if (items.length > 0) {
         const clienteExtras: Cliente = {
           id: -1, nombre: 'Productos extra', telefono: '', direccion: '',
-          zona: null, diaReparto: null, notas: '', creadoEn: new Date().toISOString(),
+          zona: null, diasReparto: [], notas: '', creadoEn: new Date().toISOString(),
         }
         paradas.push({
           id: nextParadaId(),

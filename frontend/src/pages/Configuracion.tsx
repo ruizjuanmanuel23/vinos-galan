@@ -19,7 +19,7 @@ const CLIENTE_DEMO: Cliente = {
   telefono: '1145556677',
   direccion: 'Av. Corrientes 1234',
   zona: 'Centro',
-  diaReparto: 'JUEVES',
+  diasReparto: ['JUEVES'],
   notas: '',
   creadoEn: '',
 }

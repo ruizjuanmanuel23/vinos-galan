@@ -21,7 +21,7 @@ export default function ClienteFicha() {
   const [tab, setTab] = useState<'ventas' | 'deudas'>('ventas')
   const [showEditar, setShowEditar] = useState(false)
   const [showDeuda, setShowDeuda] = useState(false)
-  const [formCliente, setFormCliente] = useState({ nombre: '', telefono: '', direccion: '', zona: '', diaReparto: '' as '' | DiaSemana, notas: '' })
+  const [formCliente, setFormCliente] = useState({ nombre: '', telefono: '', direccion: '', zona: '', diasReparto: [] as DiaSemana[], notas: '' })
   const [formDeuda, setFormDeuda] = useState({ descripcion: '', monto: '', fecha: '' })
   const [editDeuda, setEditDeuda] = useState<DeudaAnotacion | null>(null)
 
@@ -31,7 +31,7 @@ export default function ClienteFicha() {
       setFormCliente({
         nombre: r.data.nombre, telefono: r.data.telefono ?? '',
         direccion: r.data.direccion ?? '', zona: r.data.zona ?? '',
-        diaReparto: r.data.diaReparto ?? '', notas: r.data.notas ?? ''
+        diasReparto: r.data.diasReparto ?? [], notas: r.data.notas ?? ''
       })
     })
     api.get<Venta[]>(`/ventas/cliente/${id}`).then(r => setVentas(r.data)).catch(() => {})
@@ -61,7 +61,7 @@ export default function ClienteFicha() {
   }
 
   const guardarCliente = async () => {
-    await api.put(`/clientes/${id}`, { ...formCliente, diaReparto: formCliente.diaReparto || null, zona: formCliente.zona || null })
+    await api.put(`/clientes/${id}`, { ...formCliente, diasReparto: formCliente.diasReparto ?? [], zona: formCliente.zona || null })
     setShowEditar(false); cargar()
   }
   const guardarDeuda = async () => {
@@ -95,7 +95,11 @@ export default function ClienteFicha() {
         <div className="min-w-0">
           <h1 className="page-title truncate">{cliente.nombre}</h1>
           <div className="flex gap-2 mt-2 flex-wrap">
-            {cliente.diaReparto && <span className="chip bg-botella-100 text-botella-800">📅 {DIA_LABEL[cliente.diaReparto]}</span>}
+            {(cliente.diasReparto ?? []).map(d => (
+              <span key={d} className="chip bg-botella-100 text-botella-800 inline-flex items-center gap-1">
+                <Icon name="calendar" className="w-3 h-3" />{DIA_LABEL[d]}
+              </span>
+            ))}
             {cliente.zona && <span className="chip bg-dorado-100 text-dorado-800 inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{cliente.zona}</span>}
           </div>
         </div>

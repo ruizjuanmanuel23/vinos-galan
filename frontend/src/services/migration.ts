@@ -67,12 +67,18 @@ export async function migrarSiHaceFalta(): Promise<void> {
 
     // CLIENTES
     for (const c of clientesLocal) {
+      // Soporta tanto el formato viejo (diaReparto: string) como el nuevo (diasReparto: array)
+      const cAny = c as any
+      const dias: any[] = Array.isArray(cAny.diasReparto)
+        ? cAny.diasReparto
+        : cAny.diaReparto ? [cAny.diaReparto] : []
       const { data, error } = await supabase.from('clientes').insert({
         nombre: c.nombre,
         telefono: c.telefono ?? '',
         direccion: c.direccion ?? '',
         zona: c.zona ?? null,
-        dia_reparto: c.diaReparto ?? null,
+        dia_reparto: dias[0] ?? null,
+        dias_reparto: dias,
         notas: c.notas ?? '',
       }).select().single()
       if (!error && data) idMapCliente.set(c.id, data.id)

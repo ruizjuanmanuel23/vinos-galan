@@ -9,7 +9,7 @@ import {
   type Cliente, type DiaSemana, type PlantillaWhatsApp,
 } from '../types'
 
-const EMPTY = { nombre: '', telefono: '', direccion: '', zona: '', diaReparto: '' as '' | DiaSemana, notas: '' }
+const EMPTY = { nombre: '', telefono: '', direccion: '', zona: '', diasReparto: [] as DiaSemana[], notas: '' }
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -39,7 +39,7 @@ export default function Clientes() {
 
   const filtrados = useMemo(() => {
     let list = clientes
-    if (filtroDia !== 'TODOS') list = list.filter(c => c.diaReparto === filtroDia)
+    if (filtroDia !== 'TODOS') list = list.filter(c => c.diasReparto?.includes(filtroDia))
     if (busqueda) {
       const q = busqueda.toLowerCase()
       list = list.filter(c => c.nombre.toLowerCase().includes(q) || (c.telefono ?? '').includes(q))
@@ -49,7 +49,7 @@ export default function Clientes() {
 
   const guardar = async () => {
     if (!form.nombre.trim()) return
-    const payload = { ...form, diaReparto: form.diaReparto || null, zona: form.zona || null }
+    const payload = { ...form, diasReparto: form.diasReparto ?? [], zona: form.zona || null }
     await api.post('/clientes', payload)
     setShow(false); setForm(EMPTY); cargar()
   }
@@ -93,7 +93,9 @@ export default function Clientes() {
                 {c.direccion && <p className="text-xs text-gray-500 truncate flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3 shrink-0" />{c.direccion}</p>}
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                {c.diaReparto && <span className="chip bg-botella-100 text-botella-700">{DIA_LABEL[c.diaReparto].slice(0, 3)}</span>}
+                {(c.diasReparto ?? []).map(d => (
+                  <span key={d} className="chip bg-botella-100 text-botella-700">{DIA_LABEL[d].slice(0, 3)}</span>
+                ))}
                 {c.zona && <span className="chip bg-dorado-100 text-dorado-800">{c.zona}</span>}
               </div>
             </Link>
@@ -138,7 +140,9 @@ export default function Clientes() {
                   {c.zona ? <span className="chip bg-dorado-100 text-dorado-800">{c.zona}</span> : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3 text-center">
-                  {c.diaReparto ? <span className="chip bg-botella-100 text-botella-800">{DIA_LABEL[c.diaReparto]}</span> : <span className="text-gray-300">—</span>}
+                  {(c.diasReparto ?? []).length > 0
+                    ? <div className="flex flex-wrap gap-1 justify-center">{c.diasReparto.map(d => <span key={d} className="chip bg-botella-100 text-botella-800">{DIA_LABEL[d].slice(0, 3)}</span>)}</div>
+                    : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3 text-right">
                   <div className="flex items-center justify-end gap-2">
@@ -268,15 +272,37 @@ export function ClienteForm({ form, setForm, onSubmit, onCancel }: {
       </div>
 
       <div>
-        <label className="label">Día de reparto</label>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-1">
-          <button type="button" onClick={() => setForm(f => ({ ...f, diaReparto: '' }))} className={`py-2 text-xs font-bold rounded ${form.diaReparto === '' ? 'bg-gray-200 text-gray-800' : 'bg-gray-50 text-gray-500 border border-gray-200'}`}>Ninguno</button>
-          {DIAS_SEMANA.map(d => (
-            <button key={d} type="button" onClick={() => setForm(f => ({ ...f, diaReparto: d }))} className={`py-2 text-xs font-bold rounded ${form.diaReparto === d ? 'bg-botella-700 text-white' : 'bg-white text-gray-700 border border-gray-200'}`}>
-              {DIA_LABEL[d].slice(0, 3)}
-            </button>
-          ))}
+        <div className="flex items-baseline justify-between mb-1">
+          <label className="label !mb-0">Días de reparto</label>
+          <span className="text-[10px] text-gray-400">Tocá uno o varios</span>
         </div>
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+          {DIAS_SEMANA.map(d => {
+            const activo = form.diasReparto.includes(d)
+            return (
+              <button
+                key={d}
+                type="button"
+                onClick={() => setForm(f => ({
+                  ...f,
+                  diasReparto: activo
+                    ? f.diasReparto.filter(x => x !== d)
+                    : [...f.diasReparto, d],
+                }))}
+                className={`py-2.5 text-xs font-bold rounded-lg transition ${
+                  activo
+                    ? 'bg-botella-700 text-white shadow ring-2 ring-botella-300'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:border-botella-400'
+                }`}
+              >
+                {DIA_LABEL[d].slice(0, 3)}
+              </button>
+            )
+          })}
+        </div>
+        {form.diasReparto.length === 0 && (
+          <p className="text-[10px] text-gray-400 mt-1.5">Sin días asignados — el cliente no aparece bajo ningún día en Viajes</p>
+        )}
       </div>
 
       <div>
