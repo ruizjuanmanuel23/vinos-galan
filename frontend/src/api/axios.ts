@@ -4,6 +4,7 @@
  */
 import {
   clientesDB, vinosDB, ventasDB, deudasDB, viajesDB, plantillasDB,
+  zonasDB, preciosZonaDB,
 } from '../services/db'
 
 interface Response<T> { data: T }
@@ -105,6 +106,26 @@ async function handle<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string,
     if (M === 'PUT')    return await viajesDB.update(id, body) as T
     if (M === 'DELETE') { await viajesDB.delete(id); return null as T }
   }
+
+  // ZONAS
+  if (M === 'GET' && P === '/zonas')   return await zonasDB.listAll() as T
+  if (M === 'POST' && P === '/zonas')  return await zonasDB.create(body) as T
+  m = P.match(/^\/zonas\/(\d+)$/)
+  if (m) {
+    const id = Number(m[1])
+    if (M === 'PUT')    return await zonasDB.update(id, body) as T
+    if (M === 'DELETE') { await zonasDB.delete(id); return null as T }
+  }
+
+  // PRECIOS POR ZONA
+  if (M === 'GET' && P === '/precios-zona') return await preciosZonaDB.listAll() as T
+  m = P.match(/^\/precios-zona\/vino\/(\d+)$/)
+  if (M === 'GET' && m) return await preciosZonaDB.byVino(Number(m[1])) as T
+  if (M === 'POST' && P === '/precios-zona') {
+    return await preciosZonaDB.upsert(body.vinoId, body.zonaId, body.precio) as T
+  }
+  m = P.match(/^\/precios-zona\/(\d+)\/(\d+)$/)
+  if (M === 'DELETE' && m) { await preciosZonaDB.remove(Number(m[1]), Number(m[2])); return null as T }
 
   // PLANTILLAS
   if (M === 'GET' && P === '/plantillas')   return await plantillasDB.listAll() as T

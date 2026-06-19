@@ -4,7 +4,7 @@ import { useRealtimeRefresh } from '../services/realtime'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
 import { comprimirImagen, tamañoKb } from '../utils/imagen'
-import type { Vino } from '../types'
+import { precioEfectivo, type Vino, type Zona, type PrecioZona } from '../types'
 
 const EMPTY = {
   nombre: '', bodega: '', varietal: '',
@@ -23,9 +23,24 @@ export default function Vinos() {
   const [busq, setBusq] = useState('')
   const [subiendoFoto, setSubiendoFoto] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [zonas, setZonas] = useState<Zona[]>([])
+  const [preciosZona, setPreciosZona] = useState<PrecioZona[]>([])
+  const [preciosZonaEdit, setPreciosZonaEdit] = useState<Record<number, string>>({})
 
   const cargar = () => api.get<Vino[]>('/vinos/admin').then(r => setVinos(r.data)).catch(() => {})
-  useEffect(() => { cargar() }, [])
+  const cargarZonas = () => api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
+
+  useEffect(() => { cargar(); cargarZonas() }, [])
+  useEffect(() => {
+    if (editando) {
+      api.get<PrecioZona[]>(`/precios-zona/vino/${editando.id}`).then(r => {
+        setPreciosZona(r.data)
+        const map: Record<number, string> = {}
+        r.data.forEach(pz => { map[pz.zonaId] = String(pz.precio) })
+        setPreciosZonaEdit(map)
+      }).catch(() => {})
+    }
+  }, [editando])
   useRealtimeRefresh(tabla => { if (tabla === 'vinos') cargar() })
 
   const abrirNuevo = () => { setEditando(null); setForm(EMPTY); setShow(true) }
@@ -59,6 +74,18 @@ export default function Vinos() {
   }
 
   const quitarFoto = () => setForm(f => ({ ...f, fotoUrl: null }))
+
+  const guardarPrecioZona = async (zonaId: number) => {
+    if (!editando) return
+    const precio = Number(preciosZonaEdit[zonaId])
+    if (isNaN(precio) || precio < 0) {
+      await api.delete(`/precios-zona/${editando.id}/${zonaId}`)
+      setPreciosZonaEdit(p => { const n = { ...p }; delete n[zonaId]; return n })
+    } else {
+      await api.post('/precios-zona', { vinoId: editando.id, zonaId, precio })
+      setPreciosZonaEdit(p => ({ ...p, [zonaId]: String(precio) }))
+    }
+  }
 
   const guardar = async () => {
     if (!form.nombre.trim()) return
@@ -323,6 +350,70 @@ export default function Vinos() {
               </p>
             </label>
           </div>
+
+          {editando && zonas.length > 0 && (
+            <div className="border-t pt-4">
+              <h3 className="font-bold text-sm text-gray-900 mb-3 flex items-center gap-2">
+                <Icon name="map-pin" className="w-4 h-4 text-botella-700" />
+                Precios por zona
+              </h3>
+              <div className="space-y-2">
+                {zonas.map(z => {
+                  const precioBase = Number(form.precioVenta) || 0
+                  const ajuste = z.ajustePorcentaje / 100
+                  const precioSugerido = Math.round(precioBase * (1 + ajuste) * 100) / 100
+                  const tieneOverride = preciosZonaEdit[z.id]
+                  const precioEfec = tieneOverride ? Number(preciosZonaEdit[z.id]) : precioSugerido
+                  return (
+                    <div key={z.id} className="flex items-end gap-2 bg-gray-50 p-3 rounded-lg">
+                      <div className="flex-1">
+                        <p className="text-xs font-bold text-gray-600 mb-1">{z.nombre}</p>
+                        <div className="flex items-baseline gap-2 text-xs text-gray-500">
+                          <span>Base:</span>
+                          <span className="font-semibold text-gray-700">${precioBase.toLocaleString('es-AR')}</span>
+                          {z.ajustePorcentaje !== 0 && (
+                            <>
+                              <span>+</span>
+                              <span className="font-semibold text-dorado-600">{z.ajustePorcentaje}%</span>
+                              <span>=</span>
+                              <span className="font-bold text-botella-700">${precioSugerido.toLocaleString('es-AR')}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-end gap-2">
+                        <div>
+                          <label className="label text-[10px]">Override $</label>
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.01"
+                            className="input !py-1 !px-2 text-sm w-24"
+                            placeholder={precioSugerido.toLocaleString('es-AR')}
+                            value={preciosZonaEdit[z.id] ?? ''}
+                            onChange={e => setPreciosZonaEdit(p => ({ ...p, [z.id]: e.target.value }))}
+                            onBlur={() => guardarPrecioZona(z.id)}
+                          />
+                        </div>
+                        {tieneOverride && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setPreciosZonaEdit(p => { const n = { ...p }; delete n[z.id]; return n })
+                              guardarPrecioZona(z.id)
+                            }}
+                            className="text-xs text-red-500 hover:text-red-700 pb-2"
+                          >
+                            ✕
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="flex justify-end gap-2 pt-2">
             <button onClick={() => setShow(false)} className="btn-ghost">Cancelar</button>

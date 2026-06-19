@@ -6,7 +6,7 @@ import Icon from '../components/Icon'
 import { ClienteForm } from './Clientes'
 import {
   DIA_LABEL, aplicarVariables, whatsappCliente,
-  type Cliente, type DiaSemana, type Venta, type DeudaAnotacion, type PlantillaWhatsApp,
+  type Cliente, type DiaSemana, type Venta, type DeudaAnotacion, type PlantillaWhatsApp, type Zona,
 } from '../types'
 
 export default function ClienteFicha() {
@@ -14,6 +14,7 @@ export default function ClienteFicha() {
   const navigate = useNavigate()
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [plantillas, setPlantillas] = useState<PlantillaWhatsApp[]>([])
+  const [zonas, setZonas] = useState<Zona[]>([])
   const [menuPlantillas, setMenuPlantillas] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const [ventas, setVentas] = useState<Venta[]>([])
@@ -21,7 +22,7 @@ export default function ClienteFicha() {
   const [tab, setTab] = useState<'ventas' | 'deudas'>('ventas')
   const [showEditar, setShowEditar] = useState(false)
   const [showDeuda, setShowDeuda] = useState(false)
-  const [formCliente, setFormCliente] = useState({ nombre: '', telefono: '', direccion: '', zona: '', diasReparto: [] as DiaSemana[], notas: '' })
+  const [formCliente, setFormCliente] = useState({ nombre: '', telefono: '', direccion: '', zona: '', zonaId: null as number | null, diasReparto: [] as DiaSemana[], notas: '' })
   const [formDeuda, setFormDeuda] = useState({ descripcion: '', monto: '', fecha: '' })
   const [editDeuda, setEditDeuda] = useState<DeudaAnotacion | null>(null)
 
@@ -31,11 +32,13 @@ export default function ClienteFicha() {
       setFormCliente({
         nombre: r.data.nombre, telefono: r.data.telefono ?? '',
         direccion: r.data.direccion ?? '', zona: r.data.zona ?? '',
+        zonaId: r.data.zonaId ?? null,
         diasReparto: r.data.diasReparto ?? [], notas: r.data.notas ?? ''
       })
     })
     api.get<Venta[]>(`/ventas/cliente/${id}`).then(r => setVentas(r.data)).catch(() => {})
     api.get<DeudaAnotacion[]>(`/deudas/cliente/${id}`).then(r => setDeudas(r.data)).catch(() => {})
+    api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
   }
 
   useEffect(() => { cargar() }, [id])
@@ -61,7 +64,12 @@ export default function ClienteFicha() {
   }
 
   const guardarCliente = async () => {
-    await api.put(`/clientes/${id}`, { ...formCliente, diasReparto: formCliente.diasReparto ?? [], zona: formCliente.zona || null })
+    await api.put(`/clientes/${id}`, {
+      ...formCliente,
+      diasReparto: formCliente.diasReparto ?? [],
+      zona: formCliente.zona || null,
+      zonaId: formCliente.zonaId,
+    })
     setShowEditar(false); cargar()
   }
   const guardarDeuda = async () => {
@@ -100,7 +108,21 @@ export default function ClienteFicha() {
                 <Icon name="calendar" className="w-3 h-3" />{DIA_LABEL[d]}
               </span>
             ))}
-            {cliente.zona && <span className="chip bg-dorado-100 text-dorado-800 inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{cliente.zona}</span>}
+            {(() => {
+              const zonaCliente = cliente.zonaId ? zonas.find(z => z.id === cliente.zonaId) : null
+              const nombre = zonaCliente?.nombre || cliente.zona
+              if (!nombre) return null
+              return (
+                <span className="chip bg-dorado-100 text-dorado-800 inline-flex items-center gap-1">
+                  <Icon name="map-pin" className="w-3 h-3" />{nombre}
+                  {zonaCliente && zonaCliente.ajustePorcentaje !== 0 && (
+                    <span className="text-[10px] font-bold ml-1">
+                      ({zonaCliente.ajustePorcentaje > 0 ? '+' : ''}{zonaCliente.ajustePorcentaje}%)
+                    </span>
+                  )}
+                </span>
+              )
+            })()}
           </div>
         </div>
         <div className="flex gap-2">
@@ -296,7 +318,7 @@ export default function ClienteFicha() {
       <button onClick={eliminarCliente} className="w-full text-sm text-red-500 hover:text-red-700 py-2">Eliminar cliente</button>
 
       <Modal open={showEditar} onClose={() => setShowEditar(false)} title="Editar cliente" size="lg">
-        <ClienteForm form={formCliente} setForm={setFormCliente} onSubmit={guardarCliente} onCancel={() => setShowEditar(false)} />
+        <ClienteForm form={formCliente} setForm={setFormCliente} zonas={zonas} onSubmit={guardarCliente} onCancel={() => setShowEditar(false)} />
       </Modal>
 
       <Modal open={showDeuda} onClose={() => setShowDeuda(false)} title={editDeuda ? 'Editar deuda' : 'Anotar deuda'}>

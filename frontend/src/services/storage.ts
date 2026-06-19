@@ -73,6 +73,7 @@ export const clientesAPI = {
       telefono: data.telefono ?? '',
       direccion: data.direccion ?? '',
       zona: data.zona ?? null,
+      zonaId: data.zonaId ?? null,
       diasReparto: data.diasReparto ?? [],
       notas: data.notas ?? '',
       creadoEn: nowISO(),

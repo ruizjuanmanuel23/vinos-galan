@@ -6,28 +6,44 @@ import Modal from '../components/Modal'
 import Icon from '../components/Icon'
 import {
   DIAS_SEMANA, DIA_LABEL, aplicarVariables, whatsappCliente,
-  type Cliente, type DiaSemana, type PlantillaWhatsApp,
+  type Cliente, type DiaSemana, type PlantillaWhatsApp, type Zona,
 } from '../types'
 
-const EMPTY = { nombre: '', telefono: '', direccion: '', zona: '', diasReparto: [] as DiaSemana[], notas: '' }
+const EMPTY = {
+  nombre: '', telefono: '', direccion: '', zona: '',
+  zonaId: null as number | null,
+  diasReparto: [] as DiaSemana[],
+  notas: '',
+}
+
+type OrdenClientes = 'direccion' | 'nombre'
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([])
+  const [zonas, setZonas] = useState<Zona[]>([])
   const [plantillaDefault, setPlantillaDefault] = useState<PlantillaWhatsApp | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtroDia, setFiltroDia] = useState<'TODOS' | DiaSemana>('TODOS')
+  const [filtroZona, setFiltroZona] = useState<'TODAS' | number>('TODAS')
+  const [orden, setOrden] = useState<OrdenClientes>('direccion')
   const [show, setShow] = useState(false)
   const [form, setForm] = useState(EMPTY)
 
   const cargar = () => api.get<Cliente[]>('/clientes').then(r => setClientes(r.data)).catch(() => {})
-  useEffect(() => { cargar() }, [])
-  useRealtimeRefresh(tabla => { if (tabla === 'clientes') cargar() })
+  const cargarZonas = () => api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
+  useEffect(() => { cargar(); cargarZonas() }, [])
+  useRealtimeRefresh(tabla => {
+    if (tabla === 'clientes') cargar()
+    if (tabla === 'zonas') cargarZonas()
+  })
   useEffect(() => {
     api.get<PlantillaWhatsApp[]>('/plantillas').then(r => {
       const def = r.data.find(p => p.esDefault) ?? r.data[0] ?? null
       setPlantillaDefault(def)
     }).catch(() => {})
   }, [])
+
+  const zonaPorId = (id: number | null) => id ? zonas.find(z => z.id === id) ?? null : null
 
   const abrirWhatsApp = (c: Cliente, e: React.MouseEvent) => {
     e.preventDefault()
@@ -40,16 +56,32 @@ export default function Clientes() {
   const filtrados = useMemo(() => {
     let list = clientes
     if (filtroDia !== 'TODOS') list = list.filter(c => c.diasReparto?.includes(filtroDia))
+    if (filtroZona !== 'TODAS') list = list.filter(c => c.zonaId === filtroZona)
     if (busqueda) {
       const q = busqueda.toLowerCase()
-      list = list.filter(c => c.nombre.toLowerCase().includes(q) || (c.telefono ?? '').includes(q))
+      list = list.filter(c =>
+        c.nombre.toLowerCase().includes(q) ||
+        (c.telefono ?? '').includes(q) ||
+        (c.direccion ?? '').toLowerCase().includes(q),
+      )
     }
-    return list
-  }, [clientes, busqueda, filtroDia])
+    const sorted = [...list]
+    if (orden === 'direccion') {
+      sorted.sort((a, b) => (a.direccion ?? '').localeCompare(b.direccion ?? '', 'es', { numeric: true }))
+    } else {
+      sorted.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
+    }
+    return sorted
+  }, [clientes, busqueda, filtroDia, filtroZona, orden])
 
   const guardar = async () => {
     if (!form.nombre.trim()) return
-    const payload = { ...form, diasReparto: form.diasReparto ?? [], zona: form.zona || null }
+    const payload = {
+      ...form,
+      diasReparto: form.diasReparto ?? [],
+      zona: form.zona || null,
+      zonaId: form.zonaId,
+    }
     await api.post('/clientes', payload)
     setShow(false); setForm(EMPTY); cargar()
   }
@@ -67,10 +99,52 @@ export default function Clientes() {
       <div className="space-y-3">
         <div className="relative">
           <Icon name="search" className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-          <input className="input !pl-9" placeholder="Buscar por nombre o teléfono..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
+          <input className="input !pl-9" placeholder="Buscar por nombre, tel. o dirección..." value={busqueda} onChange={e => setBusqueda(e.target.value)} />
         </div>
+
+        {/* Filtro por zona + toggle de orden */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="scroll-h flex-1">
+            <div className="flex gap-1.5 w-max items-center">
+              <span className="text-[10px] uppercase tracking-wide font-bold text-gray-500 mr-1">Zona</span>
+              <button
+                onClick={() => setFiltroZona('TODAS')}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${
+                  filtroZona === 'TODAS' ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'
+                }`}
+              >Todas</button>
+              {zonas.map(z => (
+                <button
+                  key={z.id}
+                  onClick={() => setFiltroZona(z.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap inline-flex items-center gap-1 ${
+                    filtroZona === z.id ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'
+                  }`}
+                >
+                  <Icon name="map-pin" className="w-3 h-3" />{z.nombre}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="inline-flex bg-gray-100 rounded-lg p-0.5 shrink-0">
+            <button
+              onClick={() => setOrden('direccion')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded transition ${
+                orden === 'direccion' ? 'bg-white text-botella-900 shadow-sm' : 'text-gray-500'
+              }`}
+            >Por calle</button>
+            <button
+              onClick={() => setOrden('nombre')}
+              className={`px-2.5 py-1 text-[11px] font-bold rounded transition ${
+                orden === 'nombre' ? 'bg-white text-botella-900 shadow-sm' : 'text-gray-500'
+              }`}
+            >A-Z</button>
+          </div>
+        </div>
+
         <div className="scroll-h">
-          <div className="flex gap-1.5 w-max">
+          <div className="flex gap-1.5 w-max items-center">
+            <span className="text-[10px] uppercase tracking-wide font-bold text-gray-500 mr-1">Día</span>
             <button onClick={() => setFiltroDia('TODOS')} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${filtroDia === 'TODOS' ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>Todos</button>
             {DIAS_SEMANA.map(d => (
               <button key={d} onClick={() => setFiltroDia(d)} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${filtroDia === d ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>
@@ -96,7 +170,11 @@ export default function Clientes() {
                 {(c.diasReparto ?? []).map(d => (
                   <span key={d} className="chip bg-botella-100 text-botella-700">{DIA_LABEL[d].slice(0, 3)}</span>
                 ))}
-                {c.zona && <span className="chip bg-dorado-100 text-dorado-800">{c.zona}</span>}
+                {(zonaPorId(c.zonaId)?.nombre || c.zona) && (
+                  <span className="chip bg-dorado-100 text-dorado-800 inline-flex items-center gap-1">
+                    <Icon name="map-pin" className="w-3 h-3" />{zonaPorId(c.zonaId)?.nombre || c.zona}
+                  </span>
+                )}
               </div>
             </Link>
             {c.telefono && (
@@ -137,7 +215,9 @@ export default function Clientes() {
                 <td className="px-4 py-3 text-gray-700">{c.telefono ?? '—'}</td>
                 <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{c.direccion ?? '—'}</td>
                 <td className="px-4 py-3 text-center">
-                  {c.zona ? <span className="chip bg-dorado-100 text-dorado-800">{c.zona}</span> : <span className="text-gray-300">—</span>}
+                  {(zonaPorId(c.zonaId)?.nombre || c.zona)
+                    ? <span className="chip bg-dorado-100 text-dorado-800">{zonaPorId(c.zonaId)?.nombre || c.zona}</span>
+                    : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3 text-center">
                   {(c.diasReparto ?? []).length > 0
@@ -167,7 +247,7 @@ export default function Clientes() {
       </div>
 
       <Modal open={show} onClose={() => setShow(false)} title="Nuevo cliente" size="lg">
-        <ClienteForm form={form} setForm={setForm} onSubmit={guardar} onCancel={() => setShow(false)} />
+        <ClienteForm form={form} setForm={setForm} zonas={zonas} onSubmit={guardar} onCancel={() => setShow(false)} />
       </Modal>
     </div>
   )
@@ -244,8 +324,12 @@ function BotonImportarContacto({ onImport }: { onImport: (nombre: string, telefo
   )
 }
 
-export function ClienteForm({ form, setForm, onSubmit, onCancel }: {
-  form: typeof EMPTY; setForm: React.Dispatch<React.SetStateAction<typeof EMPTY>>; onSubmit: () => void; onCancel: () => void
+export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
+  form: typeof EMPTY
+  setForm: React.Dispatch<React.SetStateAction<typeof EMPTY>>
+  zonas: Zona[]
+  onSubmit: () => void
+  onCancel: () => void
 }) {
   return (
     <div className="space-y-4">
@@ -262,8 +346,28 @@ export function ClienteForm({ form, setForm, onSubmit, onCancel }: {
           <input className="input" type="tel" inputMode="tel" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
         </div>
         <div>
-          <label className="label">Zona / barrio</label>
-          <input className="input" placeholder="Centro, Sur..." value={form.zona} onChange={e => setForm(f => ({ ...f, zona: e.target.value }))} />
+          <label className="label">Grupo de zonas</label>
+          {zonas.length === 0 ? (
+            <Link
+              to="/app/configuracion"
+              className="block bg-amber-50 border border-amber-300 rounded-lg p-2.5 text-xs text-amber-800"
+            >
+              Cargá zonas en <strong>Configuración</strong> primero →
+            </Link>
+          ) : (
+            <select
+              className="input"
+              value={form.zonaId ?? ''}
+              onChange={e => setForm(f => ({ ...f, zonaId: e.target.value ? Number(e.target.value) : null }))}
+            >
+              <option value="">Sin zona asignada</option>
+              {zonas.map(z => (
+                <option key={z.id} value={z.id}>
+                  {z.nombre}{z.ajustePorcentaje !== 0 ? ` (${z.ajustePorcentaje > 0 ? '+' : ''}${z.ajustePorcentaje}%)` : ''}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
       <div>

@@ -17,11 +17,56 @@ export interface Cliente {
   nombre: string
   telefono: string
   direccion: string
+  /** Texto libre legacy. Se conserva para compatibilidad; el nuevo flujo usa zonaId. */
   zona: string | null
+  /** FK a zonas.id. Null si todavía no le asignaron grupo de zonas. */
+  zonaId: number | null
   /** Días de la semana en los que se le hace reparto. Puede tener varios. */
   diasReparto: DiaSemana[]
   notas: string
   creadoEn: string
+}
+
+/**
+ * Grupo de zonas (Berisso, Magdalena, La Plata Centro, etc).
+ * Cada zona puede tener un ajuste porcentual al precio base de los vinos.
+ * Para precios específicos que rompan el porcentaje, ver PrecioZona.
+ */
+export interface Zona {
+  id: number
+  nombre: string
+  /** % de ajuste sobre el precio base del vino. 0 = sin cambio. +10 = 10% más caro. -5 = 5% más barato. */
+  ajustePorcentaje: number
+  /** Orden de visualización en listas y selectores. */
+  orden: number
+  creadoEn: string
+}
+
+/**
+ * Override puntual de precio para un vino en una zona específica.
+ * Si existe, pisa el cálculo proporcional con el ajuste porcentual de la zona.
+ */
+export interface PrecioZona {
+  id: number
+  vinoId: number
+  zonaId: number
+  precio: number
+}
+
+/**
+ * Calcula el precio efectivo de un vino en una zona dada.
+ * Si hay un override en preciosZona, usa ese. Sino, aplica el % de ajuste de la zona.
+ */
+export function precioEfectivo(
+  vino: Vino,
+  zona: Zona | null | undefined,
+  overrides: PrecioZona[] = [],
+): number {
+  if (!zona) return Number(vino.precioVenta)
+  const override = overrides.find(p => p.vinoId === vino.id && p.zonaId === zona.id)
+  if (override) return Number(override.precio)
+  const ajuste = Number(zona.ajustePorcentaje ?? 0)
+  return Math.round(Number(vino.precioVenta) * (1 + ajuste / 100))
 }
 
 export interface Vino {

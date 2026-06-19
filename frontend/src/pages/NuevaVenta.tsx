@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '../api/axios'
 import Icon from '../components/Icon'
-import type { Cliente, Vino } from '../types'
+import { precioEfectivo, type Cliente, type Vino, type Zona, type PrecioZona } from '../types'
 
 interface Item { vino: Vino; cantidad: number }
 
@@ -18,10 +18,14 @@ export default function NuevaVenta() {
   const [notas, setNotas] = useState('')
   const [error, setError] = useState('')
   const [guardando, setGuardando] = useState(false)
+  const [zonas, setZonas] = useState<Zona[]>([])
+  const [preciosZona, setPreciosZona] = useState<PrecioZona[]>([])
   const navigate = useNavigate()
 
   useEffect(() => {
     api.get<Vino[]>('/vinos').then(r => setVinos(r.data.filter(v => v.stock > 0))).catch(() => {})
+    api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
+    api.get<PrecioZona[]>('/precios-zona').then(r => setPreciosZona(r.data)).catch(() => {})
     if (cidPre) api.get<Cliente>(`/clientes/${cidPre}`).then(r => setClientes([r.data])).catch(() => {})
   }, [cidPre])
 
@@ -35,6 +39,15 @@ export default function NuevaVenta() {
   }, [busqCliente, cidPre])
 
   const cantidadDe = (id: number) => items.find(i => i.vino.id === id)?.cantidad ?? 0
+
+  const precioEfectivoVino = (v: Vino): number => {
+    const cliente = clientes.find(c => c.id === Number(clienteId))
+    if (!cliente || !cliente.zonaId) return v.precioVenta
+    const zona = zonas.find(z => z.id === cliente.zonaId)
+    if (!zona) return v.precioVenta
+    const preciosDelVino = preciosZona.filter(pz => pz.vinoId === v.id)
+    return precioEfectivo(v, zona, preciosDelVino)
+  }
 
   const toggleVino = (v: Vino) => {
     const existe = items.find(i => i.vino.id === v.id)
@@ -69,7 +82,7 @@ export default function NuevaVenta() {
     else setItems([...items, { vino: v, cantidad: cant }])
   }
 
-  const total = items.reduce((acc, i) => acc + Number(i.vino.precioVenta) * i.cantidad, 0)
+  const total = items.reduce((acc, i) => acc + precioEfectivoVino(i.vino) * i.cantidad, 0)
   const totalUnidades = items.reduce((acc, i) => acc + i.cantidad, 0)
   const seleccionado = clientes.find(c => c.id === Number(clienteId)) || null
 
@@ -186,7 +199,10 @@ export default function NuevaVenta() {
                       <p className="font-bold text-sm text-gray-900 truncate">{v.nombre}</p>
                       <p className="text-[11px] text-gray-500 truncate">{[v.bodega, v.varietal].filter(Boolean).join(' · ') || '—'}</p>
                       <div className="flex items-baseline gap-2 mt-0.5">
-                        <span className="font-bold text-botella-700 text-sm">${Number(v.precioVenta).toLocaleString('es-AR')}</span>
+                        <span className="font-bold text-botella-700 text-sm">${precioEfectivoVino(v).toLocaleString('es-AR')}</span>
+                        {precioEfectivoVino(v) !== Number(v.precioVenta) && (
+                          <span className="text-[10px] text-gray-400 line-through">${Number(v.precioVenta).toLocaleString('es-AR')}</span>
+                        )}
                         <span className="text-[10px] text-gray-400">stock {v.stock}</span>
                       </div>
                     </div>
@@ -229,7 +245,7 @@ export default function NuevaVenta() {
                       </div>
                       <div className="text-right">
                         <p className="text-[10px] text-gray-500 uppercase tracking-wide">Subtotal</p>
-                        <p className="font-black text-botella-800 text-sm">${(Number(v.precioVenta) * cant).toLocaleString('es-AR')}</p>
+                        <p className="font-black text-botella-800 text-sm">${(precioEfectivoVino(v) * cant).toLocaleString('es-AR')}</p>
                       </div>
                     </div>
                   )}

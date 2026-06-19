@@ -16,7 +16,7 @@
 import { supabase } from '../lib/supabase'
 import type {
   Cliente, Vino, Venta, DeudaAnotacion, Viaje, Parada,
-  ItemParada, PlantillaWhatsApp, DiaSemana,
+  ItemParada, PlantillaWhatsApp, DiaSemana, Zona, PrecioZona,
 } from '../types'
 
 // =============================================================
@@ -38,6 +38,7 @@ function clienteFromRow(r: any): Cliente {
     telefono: r.telefono ?? '',
     direccion: r.direccion ?? '',
     zona: r.zona ?? null,
+    zonaId: r.zona_id ?? null,
     diasReparto: dias.filter((d): d is any => typeof d === 'string'),
     notas: r.notas ?? '',
     creadoEn: r.creado_en,
@@ -50,11 +51,38 @@ function clienteToRow(c: Partial<Cliente>) {
     telefono: c.telefono ?? '',
     direccion: c.direccion ?? '',
     zona: c.zona ?? null,
+    zona_id: c.zonaId ?? null,
     // Campo nuevo: array completo de días.
     dias_reparto: dias,
     // Campo legacy: mantenemos el primer día para compatibilidad con otras tools.
     dia_reparto: dias[0] ?? null,
     notas: c.notas ?? '',
+  }
+}
+
+function zonaFromRow(r: any): Zona {
+  return {
+    id: r.id,
+    nombre: r.nombre,
+    ajustePorcentaje: Number(r.ajuste_porcentaje ?? 0),
+    orden: r.orden ?? 0,
+    creadoEn: r.creado_en,
+  }
+}
+function zonaToRow(z: Partial<Zona>) {
+  return {
+    nombre: z.nombre,
+    ajuste_porcentaje: Number(z.ajustePorcentaje ?? 0),
+    orden: z.orden ?? 0,
+  }
+}
+
+function precioZonaFromRow(r: any): PrecioZona {
+  return {
+    id: r.id,
+    vinoId: r.vino_id,
+    zonaId: r.zona_id,
+    precio: Number(r.precio ?? 0),
   }
 }
 
@@ -402,7 +430,7 @@ export const viajesDB = {
       if (items.length > 0) {
         const clienteExtras: Cliente = {
           id: -1, nombre: 'Productos extra', telefono: '', direccion: '',
-          zona: null, diasReparto: [], notas: '', creadoEn: new Date().toISOString(),
+          zona: null, zonaId: null, diasReparto: [], notas: '', creadoEn: new Date().toISOString(),
         }
         paradas.push({
           id: nextParadaId(),
@@ -594,5 +622,64 @@ export const plantillasDB = {
   },
   async delete(id: number): Promise<void> {
     await supabase.from('plantillas_whatsapp').delete().eq('id', id)
+  },
+}
+
+// =============================================================
+// ZONAS — catálogo de grupos de localidades (Berisso, Magdalena, etc).
+// =============================================================
+export const zonasDB = {
+  async listAll(): Promise<Zona[]> {
+    const { data, error } = await supabase
+      .from('zonas')
+      .select('*')
+      .order('orden')
+      .order('nombre')
+    if (error) return []
+    return (data ?? []).map(zonaFromRow)
+  },
+  async create(z: Partial<Zona>): Promise<Zona> {
+    const { data, error } = await supabase.from('zonas').insert(zonaToRow(z)).select().single()
+    if (error) throw error
+    return zonaFromRow(data)
+  },
+  async update(id: number, z: Partial<Zona>): Promise<Zona | null> {
+    const { data, error } = await supabase.from('zonas').update(zonaToRow(z)).eq('id', id).select().single()
+    if (error) return null
+    return zonaFromRow(data)
+  },
+  async delete(id: number): Promise<void> {
+    await supabase.from('zonas').delete().eq('id', id)
+  },
+}
+
+// =============================================================
+// PRECIOS POR ZONA — overrides puntuales (vino × zona → precio fijo).
+// Si no hay override, el precio se calcula con el ajuste % de la zona.
+// =============================================================
+export const preciosZonaDB = {
+  async listAll(): Promise<PrecioZona[]> {
+    const { data, error } = await supabase.from('precios_zona').select('*')
+    if (error) return []
+    return (data ?? []).map(precioZonaFromRow)
+  },
+  async byVino(vinoId: number): Promise<PrecioZona[]> {
+    const { data, error } = await supabase.from('precios_zona').select('*').eq('vino_id', vinoId)
+    if (error) return []
+    return (data ?? []).map(precioZonaFromRow)
+  },
+  /** Crea o reemplaza un override. Si ya existe (vino+zona), lo actualiza. */
+  async upsert(vinoId: number, zonaId: number, precio: number): Promise<PrecioZona | null> {
+    const { data, error } = await supabase
+      .from('precios_zona')
+      .upsert({ vino_id: vinoId, zona_id: zonaId, precio }, { onConflict: 'vino_id,zona_id' })
+      .select()
+      .single()
+    if (error) return null
+    return precioZonaFromRow(data)
+  },
+  /** Quita el override → vuelve a usarse el porcentaje de la zona. */
+  async remove(vinoId: number, zonaId: number): Promise<void> {
+    await supabase.from('precios_zona').delete().eq('vino_id', vinoId).eq('zona_id', zonaId)
   },
 }
