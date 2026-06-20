@@ -23,7 +23,6 @@ export default function Clientes() {
   const [zonas, setZonas] = useState<Zona[]>([])
   const [plantillaDefault, setPlantillaDefault] = useState<PlantillaWhatsApp | null>(null)
   const [busqueda, setBusqueda] = useState('')
-  const [filtroDia, setFiltroDia] = useState<'TODOS' | DiaSemana>('TODOS')
   const [filtroZona, setFiltroZona] = useState<'TODAS' | number>('TODAS')
   const [orden, setOrden] = useState<OrdenClientes>('direccion')
   const [show, setShow] = useState(false)
@@ -55,7 +54,6 @@ export default function Clientes() {
 
   const filtrados = useMemo(() => {
     let list = clientes
-    if (filtroDia !== 'TODOS') list = list.filter(c => c.diasReparto?.includes(filtroDia))
     if (filtroZona !== 'TODAS') list = list.filter(c => c.zonaId === filtroZona)
     if (busqueda) {
       const q = busqueda.toLowerCase()
@@ -72,7 +70,7 @@ export default function Clientes() {
       sorted.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'))
     }
     return sorted
-  }, [clientes, busqueda, filtroDia, filtroZona, orden])
+  }, [clientes, busqueda, filtroZona, orden])
 
   const guardar = async () => {
     if (!form.nombre.trim()) return
@@ -141,18 +139,6 @@ export default function Clientes() {
             >A-Z</button>
           </div>
         </div>
-
-        <div className="scroll-h">
-          <div className="flex gap-1.5 w-max items-center">
-            <span className="text-[10px] uppercase tracking-wide font-bold text-gray-500 mr-1">Día</span>
-            <button onClick={() => setFiltroDia('TODOS')} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${filtroDia === 'TODOS' ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>Todos</button>
-            {DIAS_SEMANA.map(d => (
-              <button key={d} onClick={() => setFiltroDia(d)} className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap ${filtroDia === d ? 'bg-botella-700 text-white' : 'bg-white border border-gray-200 text-gray-700'}`}>
-                {DIA_LABEL[d].slice(0, 3)}
-              </button>
-            ))}
-          </div>
-        </div>
       </div>
 
       {/* MOBILE: cards */}
@@ -167,9 +153,6 @@ export default function Clientes() {
                 {c.direccion && <p className="text-xs text-gray-500 truncate flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3 shrink-0" />{c.direccion}</p>}
               </div>
               <div className="flex flex-col items-end gap-1 shrink-0">
-                {(c.diasReparto ?? []).map(d => (
-                  <span key={d} className="chip bg-botella-100 text-botella-700">{DIA_LABEL[d].slice(0, 3)}</span>
-                ))}
                 {(zonaPorId(c.zonaId)?.nombre || c.zona) && (
                   <span className="chip bg-dorado-100 text-dorado-800 inline-flex items-center gap-1">
                     <Icon name="map-pin" className="w-3 h-3" />{zonaPorId(c.zonaId)?.nombre || c.zona}
@@ -201,13 +184,12 @@ export default function Clientes() {
               <th className="px-4 py-3 text-left font-semibold">Teléfono</th>
               <th className="px-4 py-3 text-left font-semibold">Dirección</th>
               <th className="px-4 py-3 text-center font-semibold">Zona</th>
-              <th className="px-4 py-3 text-center font-semibold">Día reparto</th>
               <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
             {filtrados.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-12 text-center text-gray-400">No hay clientes para mostrar.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-12 text-center text-gray-400">No hay clientes para mostrar.</td></tr>
             )}
             {filtrados.map((c, i) => (
               <tr key={c.id} className={`border-t border-gray-100 hover:bg-gray-50 transition ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'}`}>
@@ -217,11 +199,6 @@ export default function Clientes() {
                 <td className="px-4 py-3 text-center">
                   {(zonaPorId(c.zonaId)?.nombre || c.zona)
                     ? <span className="chip bg-dorado-100 text-dorado-800">{zonaPorId(c.zonaId)?.nombre || c.zona}</span>
-                    : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="px-4 py-3 text-center">
-                  {(c.diasReparto ?? []).length > 0
-                    ? <div className="flex flex-wrap gap-1 justify-center">{c.diasReparto.map(d => <span key={d} className="chip bg-botella-100 text-botella-800">{DIA_LABEL[d].slice(0, 3)}</span>)}</div>
                     : <span className="text-gray-300">—</span>}
                 </td>
                 <td className="px-4 py-3 text-right">
