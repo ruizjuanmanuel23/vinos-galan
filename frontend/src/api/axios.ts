@@ -80,8 +80,8 @@ async function handle<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', url: string,
   m = P.match(/^\/viajes\/(\d+)\/cargar$/)
   if (M === 'POST' && m) {
     const res = await viajesDB.cargarCamion(Number(m[1]))
-    if (!res.ok) throw { response: { status: 409, data: res.faltantes.join('\n') } }
-    return res.viaje as T
+    if (res && !res.ok) throw { response: { status: 409, data: res.faltantes?.join('\n') ?? '' } }
+    return (res?.viaje ?? {}) as T
   }
   m = P.match(/^\/viajes\/(\d+)\/descargar$/)
   if (M === 'POST' && m) return await viajesDB.descargarCamion(Number(m[1])) as T
