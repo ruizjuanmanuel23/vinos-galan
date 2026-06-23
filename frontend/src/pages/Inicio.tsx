@@ -1,18 +1,15 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import api from '../api/axios'
-import { statsAPI, type ResumenDia } from '../services/stats'
+import * as db from '../services/api'
 import Icon from '../components/Icon'
-import { diaSemanaHoy, DIA_LABEL, type Cliente, type Viaje } from '../types'
+import { type Cliente, type Viaje, type Vino } from '../types'
 
 const fmtPlata = (n: number) => '$' + n.toLocaleString('es-AR', { maximumFractionDigits: 0 })
 
 export default function Inicio() {
-  const [clientesHoy, setClientesHoy] = useState<Cliente[]>([])
+  const [clientes, setClientes] = useState<Cliente[]>([])
   const [viajeActivo, setViajeActivo] = useState<Viaje | null>(null)
   const [stats, setStats] = useState({ clientes: 0, vinos: 0, stockBajo: 0 })
-  const [resumenDia, setResumenDia] = useState<ResumenDia | null>(null)
-  const dia = diaSemanaHoy()
 
   const hoy = new Date()
   const fechaTexto = hoy.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -22,25 +19,29 @@ export default function Inicio() {
     horaActual < 19 ? 'Buenas tardes' : 'Buenas noches'
 
   useEffect(() => {
-    statsAPI.delDia().then(setResumenDia).catch(() => {})
-    api.get<Cliente[]>(`/clientes/dia/${dia}`).then(r => setClientesHoy(r.data)).catch(() => {})
-    api.get<Viaje[]>('/viajes').then(r => {
-      const enCurso = r.data.find(v => v.estado === 'EN_CURSO')
+    const cargar = async () => {
+      const clientes = await db.listClientes()
+      const viajes = await db.listViajes()
+      const vinos = await db.listVinos()
+
+      setClientes(clientes)
+
+      const enCurso = viajes.find(v => v.estado === 'EN_CURSO')
       if (enCurso) setViajeActivo(enCurso)
-    }).catch(() => {})
-    Promise.all([api.get('/clientes'), api.get('/vinos/admin')]).then(([c, v]) => {
-      const activos = v.data.filter((x: any) => x.activo)
+
+      const activos = vinos.filter(v => v.activo)
       setStats({
-        clientes: c.data.length,
+        clientes: clientes.length,
         vinos: activos.length,
-        stockBajo: activos.filter((x: any) => x.stock <= 5).length,
+        stockBajo: activos.filter(v => v.stock <= 5).length,
       })
-    }).catch(() => {})
-  }, [dia])
+    }
+    cargar()
+  }, [])
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      {/* HEADER pro */}
+      {/* HEADER */}
       <header className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <p className="text-xs sm:text-sm text-gray-500 capitalize tracking-wide">{fechaTexto}</p>
@@ -51,133 +52,100 @@ export default function Inicio() {
         <Link to="/app/viajes/nuevo" className="btn-dorado">+ Nuevo viaje</Link>
       </header>
 
-      {/* VIAJE EN CURSO destacado */}
+      {/* VIAJE EN CURSO */}
       {viajeActivo && (
         <Link to={`/app/viajes/${viajeActivo.id}`} className="block card p-4 sm:p-5 border-l-4 border-dorado-500 hover:shadow-md transition group">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-dorado-500 animate-pulse" />
-                <span className="text-[10px] uppercase tracking-[0.2em] font-black text-dorado-700">Viaje en curso</span>
+                <p className="font-bold text-sm sm:text-base text-gray-900">{viajeActivo.titulo}</p>
               </div>
-              <p className="font-black text-botella-900 text-base sm:text-lg mt-1 truncate" style={{ fontFamily: 'Georgia, serif' }}>
-                {viajeActivo.titulo ?? 'Viaje del día'}
-              </p>
-              <div className="flex items-center gap-3 text-xs sm:text-sm text-gray-600 mt-1">
-                <span><strong className="text-botella-800">{viajeActivo.paradas.filter(p => p.estado === 'VISITADA').length}</strong>/{viajeActivo.paradas.length} paradas</span>
-                {viajeActivo.cargado && <span className="chip bg-emerald-100 text-emerald-700 inline-flex items-center gap-1"><Icon name="box" className="w-3 h-3" />Cargado</span>}
-              </div>
+              <p className="text-xs text-gray-500 mt-1">En curso</p>
             </div>
-            <span className="text-2xl text-botella-300 group-hover:text-botella-600 group-hover:translate-x-1 transition-all shrink-0">→</span>
+            <Icon name="arrow-right" className="w-5 h-5 text-botella-700 group-hover:translate-x-1 transition" />
           </div>
         </Link>
       )}
 
-      {/* RESUMEN DE HOY */}
-      <section>
-        <div className="flex items-baseline justify-between mb-3">
-          <h2 className="text-sm sm:text-base font-bold uppercase tracking-wider text-gray-500">Hoy</h2>
-          <Link to="/app/resumen" className="text-xs text-botella-700 font-bold hover:underline">Ver resumen →</Link>
+      {/* STATS */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm sm:text-base font-bold uppercase tracking-wider text-gray-500">Resumen</h2>
+          <Link to="/app/resumen" className="text-xs text-botella-700 font-bold hover:underline">Ver detalles →</Link>
         </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <div className="card p-4 bg-gradient-to-br from-emerald-50 to-white border-emerald-200">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">Ventas</p>
-            <p className="text-2xl sm:text-3xl font-black text-emerald-900 mt-1 leading-none">{resumenDia?.ventas ?? 0}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div className="card p-4 bg-gradient-to-br from-botella-50 to-white border-botella-200">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-botella-700">Clientes</p>
+            <p className="text-2xl sm:text-3xl font-black text-botella-900 mt-1">{stats.clientes}</p>
+            <p className="text-[10px] text-gray-500 mt-1">cargados en la app</p>
           </div>
           <div className="card p-4 bg-gradient-to-br from-dorado-50 to-white border-dorado-200">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-dorado-700">Recaudado</p>
-            <p className="text-xl sm:text-2xl font-black text-dorado-800 mt-1 leading-none">{fmtPlata(resumenDia?.recaudado ?? 0)}</p>
+            <p className="text-[10px] font-bold uppercase tracking-wide text-dorado-700">Productos</p>
+            <p className="text-2xl sm:text-3xl font-black text-dorado-900 mt-1">{stats.vinos}</p>
+            <p className="text-[10px] text-gray-500 mt-1">activos</p>
           </div>
-          <div className="card p-4 bg-gradient-to-br from-botella-50 to-white border-botella-200">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-botella-700">Paradas</p>
-            <p className="text-2xl sm:text-3xl font-black text-botella-900 mt-1 leading-none">{resumenDia?.paradas ?? 0}</p>
-          </div>
-          <div className="card p-4 bg-gradient-to-br from-blue-50 to-white border-blue-200">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-blue-700">Entregado</p>
-            <p className="text-2xl sm:text-3xl font-black text-blue-900 mt-1 leading-none">{resumenDia?.productosEntregados ?? 0} <span className="text-sm font-bold">u.</span></p>
+          <div className="card p-4 bg-gradient-to-br from-red-50 to-white border-red-200">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-red-700">Stock Bajo</p>
+            <p className="text-2xl sm:text-3xl font-black text-red-900 mt-1">{stats.stockBajo}</p>
+            <p className="text-[10px] text-gray-500 mt-1">≤ 5 unidades</p>
           </div>
         </div>
       </section>
 
-      {/* GRID 2/3 + 1/3 */}
+      {/* GRID PRINCIPAL */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Recorrido del día */}
+        {/* Clientes recientes */}
         <div className="lg:col-span-2 card overflow-hidden">
           <div className="px-4 sm:px-5 py-3 sm:py-4 border-b border-gray-100 flex items-center justify-between gap-2">
-            <div>
-              <h2 className="font-black text-gray-900 text-sm sm:text-base">Recorrido de hoy</h2>
-              <p className="text-[11px] text-gray-500">{DIA_LABEL[dia]} · {clientesHoy.length} cliente{clientesHoy.length !== 1 ? 's' : ''}</p>
-            </div>
-            <Link to="/app/viajes" className="text-xs text-botella-700 font-bold hover:underline shrink-0">Ver todos →</Link>
+            <h2 className="font-black text-gray-900 text-sm sm:text-base">Clientes</h2>
+            <Link to="/app/clientes" className="text-xs text-botella-700 font-bold hover:underline">Ver todos →</Link>
           </div>
-          {clientesHoy.length === 0 ? (
-            <p className="text-center text-sm text-gray-400 py-10">Sin clientes asignados a {DIA_LABEL[dia].toLowerCase()}.</p>
+          {clientes.length === 0 ? (
+            <p className="text-center text-sm text-gray-400 py-10">Sin clientes cargados. <Link to="/app/clientes" className="text-botella-700 font-bold hover:underline">Crear primero</Link></p>
           ) : (
-            <div className="divide-y divide-gray-100">
-              {clientesHoy.slice(0, 6).map(c => (
-                <Link key={c.id} to={`/app/clientes/${c.id}`} className="flex items-center justify-between gap-2 px-4 sm:px-5 py-2.5 hover:bg-gray-50 transition">
+            <div className="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+              {clientes.slice(0, 8).map(c => (
+                <Link key={c.id} to={`/app/clientes/${c.id}`} className="flex items-center justify-between gap-2 px-4 sm:px-5 py-3 hover:bg-gray-50 transition">
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-sm text-gray-900 truncate">{c.nombre}</p>
                     {c.direccion && <p className="text-[11px] text-gray-500 truncate">{c.direccion}</p>}
                   </div>
-                  {c.zona && <span className="chip bg-dorado-100 text-dorado-800 shrink-0">{c.zona}</span>}
+                  {c.zonaId && <span className="chip bg-dorado-100 text-dorado-800 shrink-0 text-xs">📍 Barrio</span>}
                 </Link>
               ))}
-              {clientesHoy.length > 6 && (
-                <Link to="/app/viajes" className="block text-center text-xs text-botella-700 font-bold py-3 hover:bg-gray-50">
-                  + {clientesHoy.length - 6} más → armar viaje
-                </Link>
-              )}
             </div>
           )}
         </div>
 
-        {/* Atajos + datos generales */}
+        {/* Atajos */}
         <div className="space-y-3">
-          {/* Atajos */}
           <div className="card p-4">
-            <h2 className="font-black text-gray-900 text-sm mb-3">Atajos</h2>
-            <div className="grid grid-cols-1 gap-1.5">
-              <Link to="/app/ventas/nueva" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-emerald-50 transition group">
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 group-hover:scale-110 transition"><Icon name="shopping-bag" className="w-4 h-4" /></div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900">Nueva venta</p>
-                  <p className="text-[10px] text-gray-500">Descuenta stock</p>
+            <h2 className="font-black text-gray-900 text-sm mb-3">Acciones rápidas</h2>
+            <div className="grid grid-cols-1 gap-2">
+              <Link to="/app/viajes/nuevo" className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-dorado-50 transition group">
+                <div className="w-8 h-8 rounded-lg bg-dorado-100 flex items-center justify-center text-dorado-800 group-hover:scale-110 transition">🚗</div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-gray-900">Nuevo viaje</p>
+                  <p className="text-[10px] text-gray-500">Crear recorrido</p>
                 </div>
               </Link>
-              <Link to="/app/clientes" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-botella-50 transition group">
-                <div className="w-8 h-8 rounded-lg bg-botella-100 flex items-center justify-center text-base group-hover:scale-110 transition">👥</div>
-                <div>
+              <Link to="/app/clientes" className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-botella-50 transition group">
+                <div className="w-8 h-8 rounded-lg bg-botella-100 flex items-center justify-center group-hover:scale-110 transition">👥</div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-gray-900">Clientes</p>
-                  <p className="text-[10px] text-gray-500">{stats.clientes} cargados</p>
+                  <p className="text-[10px] text-gray-500">Gestionar</p>
                 </div>
               </Link>
-              <Link to="/app/vinos" className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-dorado-50 transition group">
-                <div className="w-8 h-8 rounded-lg bg-dorado-100 flex items-center justify-center text-dorado-800 group-hover:scale-110 transition"><Icon name="wine-bottle" className="w-4 h-4" /></div>
-                <div className="flex-1">
+              <Link to="/app/vinos" className="flex items-center gap-2 px-3 py-2.5 rounded-lg hover:bg-emerald-50 transition group">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 group-hover:scale-110 transition"><Icon name="wine-bottle" className="w-4 h-4" /></div>
+                <div className="min-w-0">
                   <p className="text-sm font-bold text-gray-900">Bodega</p>
-                  <p className="text-[10px] text-gray-500">{stats.vinos} productos</p>
+                  <p className="text-[10px] text-gray-500">Stock</p>
                 </div>
-                {stats.stockBajo > 0 && (
-                  <span className="chip bg-red-100 text-red-700">{stats.stockBajo}</span>
-                )}
               </Link>
             </div>
           </div>
-
-          {/* Alerta de stock */}
-          {stats.stockBajo > 0 && (
-            <Link to="/app/vinos" className="block card p-3 bg-red-50 border-red-200 hover:bg-red-100 transition">
-              <div className="flex items-center gap-2">
-                <div className="text-amber-600"><Icon name="alert" className="w-5 h-5" /></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-red-900">Stock crítico</p>
-                  <p className="text-[10px] text-red-700">{stats.stockBajo} producto{stats.stockBajo !== 1 ? 's' : ''} para reponer</p>
-                </div>
-                <span className="text-red-600 font-bold">→</span>
-              </div>
-            </Link>
-          )}
         </div>
       </div>
     </div>
