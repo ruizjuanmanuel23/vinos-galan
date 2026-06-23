@@ -94,6 +94,9 @@ export default function Viajes() {
     }
     setClientesPorZona(map)
   }
+  // Cargar clientes en el mount inicial
+  useEffect(() => { cargarClientesTodos() }, [])
+  // Y también cuando las zonas cambian (para actualizar los grupos)
   useEffect(() => { cargarClientesTodos() }, [zonas])
 
   const cargarBodega = async () => { const v = await db.listVinos(); setBodega(v.filter(v => v.activo)) }
