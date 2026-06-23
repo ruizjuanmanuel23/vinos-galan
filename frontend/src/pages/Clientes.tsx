@@ -26,7 +26,9 @@ export default function Clientes() {
   const [filtroZona, setFiltroZona] = useState<'TODAS' | number>('TODAS')
   const [orden, setOrden] = useState<OrdenClientes>('direccion')
   const [show, setShow] = useState(false)
+  const [showBarrios, setShowBarrios] = useState(false)
   const [form, setForm] = useState(EMPTY)
+  const [formBarrio, setFormBarrio] = useState({ nombre: '', ajustePorcentaje: 0 })
 
   const cargar = () => api.get<Cliente[]>('/clientes').then(r => setClientes(r.data)).catch(() => {})
   const cargarZonas = () => api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
@@ -91,7 +93,12 @@ export default function Clientes() {
           <h1 className="page-title">Clientes</h1>
           <p className="page-subtitle">{clientes.length} cliente{clientes.length !== 1 ? 's' : ''}</p>
         </div>
-        <button onClick={() => setShow(true)} className="btn-primary">+ Nuevo</button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowBarrios(true)} className="btn-secondary flex items-center gap-1.5">
+            <Icon name="map-pin" className="w-4 h-4" />Barrios
+          </button>
+          <button onClick={() => setShow(true)} className="btn-primary">+ Nuevo</button>
+        </div>
       </div>
 
       <div className="space-y-3">
@@ -225,6 +232,79 @@ export default function Clientes() {
 
       <Modal open={show} onClose={() => setShow(false)} title="Nuevo cliente" size="lg">
         <ClienteForm form={form} setForm={setForm} zonas={zonas} onSubmit={guardar} onCancel={() => setShow(false)} />
+      </Modal>
+
+      <Modal open={showBarrios} onClose={() => setShowBarrios(false)} title="Barrios" size="md">
+        <div className="space-y-4">
+          <div>
+            <label className="label">Nombre del barrio</label>
+            <input
+              type="text"
+              className="input"
+              placeholder="ej. La Plata Centro, Berisso, Magdalena..."
+              value={formBarrio.nombre}
+              onChange={e => setFormBarrio(f => ({ ...f, nombre: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label className="label">Ajuste de precio (%)</label>
+            <input
+              type="number"
+              className="input"
+              placeholder="0"
+              value={formBarrio.ajustePorcentaje}
+              onChange={e => setFormBarrio(f => ({ ...f, ajustePorcentaje: parseFloat(e.target.value) || 0 }))}
+              step="0.1"
+            />
+            <p className="text-[11px] text-gray-500 mt-1">Porcentaje de ajuste de precio para este barrio (ej. +5 o -3)</p>
+          </div>
+
+          <div className="space-y-2">
+            <h3 className="font-bold text-sm">Barrios existentes</h3>
+            {zonas.length === 0 ? (
+              <p className="text-sm text-gray-500">Sin barrios creados aún.</p>
+            ) : (
+              <div className="space-y-1">
+                {zonas.map(z => (
+                  <div key={z.id} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg border border-gray-100">
+                    <div>
+                      <p className="font-semibold text-sm">{z.nombre}</p>
+                      {z.ajustePorcentaje !== 0 && (
+                        <p className="text-[11px] text-gray-500">Ajuste: {z.ajustePorcentaje > 0 ? '+' : ''}{z.ajustePorcentaje}%</p>
+                      )}
+                    </div>
+                    <button
+                      onClick={async () => {
+                        if (confirm(`¿Eliminar barrio "${z.nombre}"?`)) {
+                          await api.delete(`/zonas/${z.id}`)
+                          cargarZonas()
+                        }
+                      }}
+                      className="text-xs text-red-600 hover:text-red-700 font-bold"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <button onClick={() => setShowBarrios(false)} className="btn-ghost">Cerrar</button>
+            <button
+              onClick={async () => {
+                if (!formBarrio.nombre.trim()) return
+                await api.post('/zonas', formBarrio)
+                cargarZonas()
+                setFormBarrio({ nombre: '', ajustePorcentaje: 0 })
+              }}
+              className="btn-primary"
+            >
+              Crear barrio
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
