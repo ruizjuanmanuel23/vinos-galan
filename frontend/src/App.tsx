@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import PublicLayout from './components/PublicLayout'
@@ -17,8 +18,12 @@ import Vinos from './pages/Vinos'
 import NuevaVenta from './pages/NuevaVenta'
 import Configuracion from './pages/Configuracion'
 import Resumen from './pages/Resumen'
+import { initializeApp } from './services/api'
 
 export default function App() {
+  useEffect(() => {
+    initializeApp().catch(err => console.error('Error initializing app:', err))
+  }, [])
   return (
     <BrowserRouter>
       <Routes>
