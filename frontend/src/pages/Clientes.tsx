@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import api from '../api/axios'
+import * as db from '../services/api'
 import { useRealtimeRefresh } from '../services/realtime'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
@@ -30,18 +30,18 @@ export default function Clientes() {
   const [form, setForm] = useState(EMPTY)
   const [formBarrio, setFormBarrio] = useState({ nombre: '', ajustePorcentaje: 0 })
 
-  const cargar = () => api.get<Cliente[]>('/clientes').then(r => setClientes(r.data)).catch(() => {})
-  const cargarZonas = () => api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
+  const cargar = async () => { const c = await db.listClientes(); setClientes(c) }
+  const cargarZonas = async () => { const z = await db.listZonas(); setZonas(z) }
   useEffect(() => { cargar(); cargarZonas() }, [])
   useRealtimeRefresh(tabla => {
     if (tabla === 'clientes') cargar()
     if (tabla === 'zonas') cargarZonas()
   })
   useEffect(() => {
-    api.get<PlantillaWhatsApp[]>('/plantillas').then(r => {
-      const def = r.data.find(p => p.esDefault) ?? r.data[0] ?? null
+    db.listPlantillas().then(plantillas => {
+      const def = plantillas.find(p => p.esDefault) ?? plantillas[0] ?? null
       setPlantillaDefault(def)
-    }).catch(() => {})
+    })
   }, [])
 
   const zonaPorId = (id: number | null) => id ? zonas.find(z => z.id === id) ?? null : null
@@ -82,7 +82,7 @@ export default function Clientes() {
       zona: form.zona || null,
       zonaId: form.zonaId,
     }
-    await api.post('/clientes', payload)
+    await db.createCliente(payload)
     setShow(false); setForm(EMPTY); cargar()
   }
 
@@ -276,7 +276,7 @@ export default function Clientes() {
                     <button
                       onClick={async () => {
                         if (confirm(`¿Eliminar barrio "${z.nombre}"?`)) {
-                          await api.delete(`/zonas/${z.id}`)
+                          await db.deleteZona(z.id)
                           cargarZonas()
                         }
                       }}
@@ -295,7 +295,7 @@ export default function Clientes() {
             <button
               onClick={async () => {
                 if (!formBarrio.nombre.trim()) return
-                await api.post('/zonas', formBarrio)
+                await db.createZona(formBarrio)
                 cargarZonas()
                 setFormBarrio({ nombre: '', ajustePorcentaje: 0 })
               }}
