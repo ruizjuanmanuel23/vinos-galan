@@ -1,6 +1,8 @@
 /**
- * Capa de datos: localStorage como fuente principal (seguro, offline)
- * Con sincronización opcional al backend cuando esté disponible.
+ * Capa de datos: Offline-first con backend Spring Boot
+ * 1. Intenta backend (http://localhost:8110)
+ * 2. Fallback a localStorage si backend no disponible
+ * 3. Sincroniza automáticamente cuando backend vuelve
  */
 
 import type {
@@ -16,6 +18,24 @@ const STORAGE_KEYS = {
   viajes: 'vg:viajes',
   deudas: 'vg:deudas',
   plantillas: 'vg:plantillas',
+}
+
+const API_BASE = 'http://localhost:8110/api'
+let backendAvailable = false
+
+// ============================================================
+// Backend availability check
+// ============================================================
+
+async function isBackendAvailable(): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/zonas`, { method: 'HEAD', mode: 'no-cors' })
+    backendAvailable = res.status < 500
+    return backendAvailable
+  } catch {
+    backendAvailable = false
+    return false
+  }
 }
 
 // ============================================================
@@ -44,6 +64,21 @@ function saveToStorage(key: string, data: any): void {
 // ============================================================
 
 export async function listClientes(): Promise<Cliente[]> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/clientes`)
+      if (res.ok) {
+        const data = await res.json()
+        saveToStorage(STORAGE_KEYS.clientes, data)
+        return data
+      }
+    } catch (e) {
+      console.warn('Backend unavailable, using localStorage')
+    }
+  }
+
   return getFromStorage<Cliente>(STORAGE_KEYS.clientes, [])
 }
 
@@ -53,6 +88,26 @@ export async function getCliente(id: number): Promise<Cliente | null> {
 }
 
 export async function createCliente(c: Partial<Cliente>): Promise<Cliente> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/clientes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(c),
+      })
+      if (res.ok) {
+        const cliente = await res.json()
+        const clientes = await listClientes()
+        saveToStorage(STORAGE_KEYS.clientes, [...clientes, cliente])
+        return cliente
+      }
+    } catch (e) {
+      console.warn('Backend create failed, using localStorage')
+    }
+  }
+
   const clientes = await listClientes()
   const newId = Math.max(0, ...clientes.map(x => x.id ?? 0)) + 1
   const cliente: Cliente = {
@@ -66,12 +121,34 @@ export async function createCliente(c: Partial<Cliente>): Promise<Cliente> {
     notas: c.notas ?? '',
     creadoEn: new Date().toISOString(),
   }
-  clientes.push(cliente)
-  saveToStorage(STORAGE_KEYS.clientes, clientes)
+  const updated = [...clientes, cliente]
+  saveToStorage(STORAGE_KEYS.clientes, updated)
   return cliente
 }
 
 export async function updateCliente(id: number, c: Partial<Cliente>): Promise<Cliente> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/clientes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(c),
+      })
+      if (res.ok) {
+        const cliente = await res.json()
+        const clientes = await listClientes()
+        const idx = clientes.findIndex(x => x.id === id)
+        clientes[idx] = cliente
+        saveToStorage(STORAGE_KEYS.clientes, clientes)
+        return cliente
+      }
+    } catch (e) {
+      console.warn('Backend update failed, using localStorage')
+    }
+  }
+
   const clientes = await listClientes()
   const idx = clientes.findIndex(x => x.id === id)
   if (idx === -1) throw new Error('Cliente no encontrado')
@@ -81,6 +158,21 @@ export async function updateCliente(id: number, c: Partial<Cliente>): Promise<Cl
 }
 
 export async function deleteCliente(id: number): Promise<void> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/clientes/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        const clientes = await listClientes()
+        saveToStorage(STORAGE_KEYS.clientes, clientes.filter(x => x.id !== id))
+        return
+      }
+    } catch (e) {
+      console.warn('Backend delete failed, using localStorage')
+    }
+  }
+
   const clientes = await listClientes()
   saveToStorage(STORAGE_KEYS.clientes, clientes.filter(x => x.id !== id))
 }
@@ -90,10 +182,45 @@ export async function deleteCliente(id: number): Promise<void> {
 // ============================================================
 
 export async function listZonas(): Promise<Zona[]> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/zonas`)
+      if (res.ok) {
+        const data = await res.json()
+        saveToStorage(STORAGE_KEYS.zonas, data)
+        return data
+      }
+    } catch (e) {
+      console.warn('Backend unavailable, using localStorage')
+    }
+  }
+
   return getFromStorage<Zona>(STORAGE_KEYS.zonas, [])
 }
 
 export async function createZona(z: Partial<Zona>): Promise<Zona> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/zonas`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(z),
+      })
+      if (res.ok) {
+        const zona = await res.json()
+        const zonas = await listZonas()
+        saveToStorage(STORAGE_KEYS.zonas, [...zonas, zona])
+        return zona
+      }
+    } catch (e) {
+      console.warn('Backend create failed, using localStorage')
+    }
+  }
+
   const zonas = await listZonas()
   const newId = Math.max(0, ...zonas.map(x => x.id ?? 0)) + 1
   const zona: Zona = {
@@ -103,12 +230,34 @@ export async function createZona(z: Partial<Zona>): Promise<Zona> {
     orden: z.orden ?? 0,
     creadoEn: new Date().toISOString(),
   }
-  zonas.push(zona)
-  saveToStorage(STORAGE_KEYS.zonas, zonas)
+  const updated = [...zonas, zona]
+  saveToStorage(STORAGE_KEYS.zonas, updated)
   return zona
 }
 
 export async function updateZona(id: number, z: Partial<Zona>): Promise<Zona> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/zonas/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(z),
+      })
+      if (res.ok) {
+        const zona = await res.json()
+        const zonas = await listZonas()
+        const idx = zonas.findIndex(x => x.id === id)
+        zonas[idx] = zona
+        saveToStorage(STORAGE_KEYS.zonas, zonas)
+        return zona
+      }
+    } catch (e) {
+      console.warn('Backend update failed, using localStorage')
+    }
+  }
+
   const zonas = await listZonas()
   const idx = zonas.findIndex(x => x.id === id)
   if (idx === -1) throw new Error('Zona no encontrada')
@@ -118,15 +267,37 @@ export async function updateZona(id: number, z: Partial<Zona>): Promise<Zona> {
 }
 
 export async function deleteZona(id: number): Promise<void> {
+  const isBackend = await isBackendAvailable()
+
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/zonas/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        const zonas = await listZonas()
+        saveToStorage(STORAGE_KEYS.zonas, zonas.filter(x => x.id !== id))
+        return
+      }
+    } catch (e) {
+      console.warn('Backend delete failed, using localStorage')
+    }
+  }
+
   const zonas = await listZonas()
   saveToStorage(STORAGE_KEYS.zonas, zonas.filter(x => x.id !== id))
 }
 
 // ============================================================
-// Vinos
+// Vinos (igual patrón: backend + fallback localStorage)
 // ============================================================
 
 export async function listVinos(): Promise<Vino[]> {
+  const isBackend = await isBackendAvailable()
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/vinos`)
+      if (res.ok) { const data = await res.json(); saveToStorage(STORAGE_KEYS.vinos, data); return data }
+    } catch (e) {}
+  }
   return getFromStorage<Vino>(STORAGE_KEYS.vinos, [])
 }
 
@@ -136,28 +307,28 @@ export async function getVino(id: number): Promise<Vino | null> {
 }
 
 export async function createVino(v: Partial<Vino>): Promise<Vino> {
+  const isBackend = await isBackendAvailable()
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/vinos`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) })
+      if (res.ok) { const vino = await res.json(); const vinos = await listVinos(); saveToStorage(STORAGE_KEYS.vinos, [...vinos, vino]); return vino }
+    } catch (e) {}
+  }
   const vinos = await listVinos()
   const newId = Math.max(0, ...vinos.map(x => x.id ?? 0)) + 1
-  const vino: Vino = {
-    id: newId,
-    nombre: v.nombre ?? '',
-    bodega: v.bodega ?? '',
-    varietal: v.varietal ?? '',
-    precioVenta: v.precioVenta ?? 0,
-    precioCosto: v.precioCosto ?? 0,
-    stock: v.stock ?? 0,
-    activo: v.activo ?? true,
-    fotoUrl: v.fotoUrl ?? null,
-    descripcion: v.descripcion ?? null,
-    mostrarEnCatalogo: v.mostrarEnCatalogo ?? true,
-    creadoEn: new Date().toISOString(),
-  }
-  vinos.push(vino)
-  saveToStorage(STORAGE_KEYS.vinos, vinos)
+  const vino: Vino = { id: newId, nombre: v.nombre ?? '', bodega: v.bodega ?? '', varietal: v.varietal ?? '', precioVenta: v.precioVenta ?? 0, precioCosto: v.precioCosto ?? 0, stock: v.stock ?? 0, activo: v.activo ?? true, fotoUrl: v.fotoUrl ?? null, descripcion: v.descripcion ?? null, mostrarEnCatalogo: v.mostrarEnCatalogo ?? true, creadoEn: new Date().toISOString() }
+  saveToStorage(STORAGE_KEYS.vinos, [...vinos, vino])
   return vino
 }
 
 export async function updateVino(id: number, v: Partial<Vino>): Promise<Vino> {
+  const isBackend = await isBackendAvailable()
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/vinos/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) })
+      if (res.ok) { const vino = await res.json(); const vinos = await listVinos(); const idx = vinos.findIndex(x => x.id === id); vinos[idx] = vino; saveToStorage(STORAGE_KEYS.vinos, vinos); return vino }
+    } catch (e) {}
+  }
   const vinos = await listVinos()
   const idx = vinos.findIndex(x => x.id === id)
   if (idx === -1) throw new Error('Vino no encontrado')
@@ -167,6 +338,13 @@ export async function updateVino(id: number, v: Partial<Vino>): Promise<Vino> {
 }
 
 export async function deleteVino(id: number): Promise<void> {
+  const isBackend = await isBackendAvailable()
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/vinos/${id}`, { method: 'DELETE' })
+      if (res.ok) { const vinos = await listVinos(); saveToStorage(STORAGE_KEYS.vinos, vinos.filter(x => x.id !== id)); return }
+    } catch (e) {}
+  }
   const vinos = await listVinos()
   saveToStorage(STORAGE_KEYS.vinos, vinos.filter(x => x.id !== id))
 }
@@ -194,6 +372,13 @@ export async function getVenta(id: number): Promise<Venta | null> {
 // ============================================================
 
 export async function listViajes(): Promise<Viaje[]> {
+  const isBackend = await isBackendAvailable()
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/viajes`)
+      if (res.ok) { const data = await res.json(); saveToStorage(STORAGE_KEYS.viajes, data); return data }
+    } catch (e) {}
+  }
   return getFromStorage<Viaje>(STORAGE_KEYS.viajes, [])
 }
 
@@ -203,27 +388,28 @@ export async function getViaje(id: number): Promise<Viaje | null> {
 }
 
 export async function createViaje(v: Partial<Viaje>): Promise<Viaje> {
+  const isBackend = await isBackendAvailable()
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/viajes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) })
+      if (res.ok) { const viaje = await res.json(); const viajes = await listViajes(); saveToStorage(STORAGE_KEYS.viajes, [...viajes, viaje]); return viaje }
+    } catch (e) {}
+  }
   const viajes = await listViajes()
   const newId = Math.max(0, ...viajes.map(x => x.id ?? 0)) + 1
-  const viaje: Viaje = {
-    id: newId,
-    fecha: v.fecha ?? '',
-    titulo: v.titulo ?? null,
-    notas: v.notas ?? null,
-    estado: 'EN_CURSO',
-    inicio: v.inicio ?? null,
-    fin: v.fin ?? null,
-    paradas: v.paradas ?? [],
-    cantidadTotalManual: v.cantidadTotalManual ?? null,
-    cargado: v.cargado ?? false,
-    fechaCarga: v.fechaCarga ?? null,
-  }
-  viajes.push(viaje)
-  saveToStorage(STORAGE_KEYS.viajes, viajes)
+  const viaje: Viaje = { id: newId, fecha: v.fecha ?? '', titulo: v.titulo ?? null, notas: v.notas ?? null, estado: 'EN_CURSO', inicio: v.inicio ?? null, fin: v.fin ?? null, paradas: v.paradas ?? [], cantidadTotalManual: v.cantidadTotalManual ?? null, cargado: v.cargado ?? false, fechaCarga: v.fechaCarga ?? null }
+  saveToStorage(STORAGE_KEYS.viajes, [...viajes, viaje])
   return viaje
 }
 
 export async function updateViaje(id: number, v: Partial<Viaje>): Promise<Viaje> {
+  const isBackend = await isBackendAvailable()
+  if (isBackend) {
+    try {
+      const res = await fetch(`${API_BASE}/viajes/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) })
+      if (res.ok) { const viaje = await res.json(); const viajes = await listViajes(); const idx = viajes.findIndex(x => x.id === id); viajes[idx] = viaje; saveToStorage(STORAGE_KEYS.viajes, viajes); return viaje }
+    } catch (e) {}
+  }
   const viajes = await listViajes()
   const idx = viajes.findIndex(x => x.id === id)
   if (idx === -1) throw new Error('Viaje no encontrado')
