@@ -6,7 +6,7 @@ import Icon from '../components/Icon'
 import {
   DIAS_SEMANA, DIA_LABEL, DIA_CORTO, diaSemanaHoy,
   totalProductosViaje,
-  type Cliente, type DiaSemana, type Viaje, type Vino,
+  type Cliente, type DiaSemana, type Viaje, type Vino, type Zona, type Parada, type ItemParada,
 } from '../types'
 
 const fmt = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })
@@ -32,8 +32,6 @@ function diaSemanaDeFecha(iso: string): DiaSemana {
 type Pedido = Record<number, Record<number, number>>
 /** Extras del viaje: vinoId → cantidad (productos sueltos sin cliente) */
 type Extras = Record<number, number>
-
-import { type Zona } from '../types'
 
 export default function Viajes() {
   // ====== DATOS ======
