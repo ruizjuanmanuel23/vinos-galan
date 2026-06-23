@@ -433,40 +433,6 @@ export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
       </div>
 
       <div>
-        <div className="flex items-baseline justify-between mb-1">
-          <label className="label !mb-0">Días de reparto</label>
-          <span className="text-[10px] text-gray-400">Tocá uno o varios</span>
-        </div>
-        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
-          {DIAS_SEMANA.map(d => {
-            const activo = form.diasReparto.includes(d)
-            return (
-              <button
-                key={d}
-                type="button"
-                onClick={() => setForm(f => ({
-                  ...f,
-                  diasReparto: activo
-                    ? f.diasReparto.filter(x => x !== d)
-                    : [...f.diasReparto, d],
-                }))}
-                className={`py-2.5 text-xs font-bold rounded-lg transition ${
-                  activo
-                    ? 'bg-botella-700 text-white shadow ring-2 ring-botella-300'
-                    : 'bg-white text-gray-700 border border-gray-200 hover:border-botella-400'
-                }`}
-              >
-                {DIA_LABEL[d].slice(0, 3)}
-              </button>
-            )
-          })}
-        </div>
-        {form.diasReparto.length === 0 && (
-          <p className="text-[10px] text-gray-400 mt-1.5">Sin días asignados — el cliente no aparece bajo ningún día en Viajes</p>
-        )}
-      </div>
-
-      <div>
         <label className="label">Notas</label>
         <textarea className="input resize-none" rows={3} value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} />
       </div>

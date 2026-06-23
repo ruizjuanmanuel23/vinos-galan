@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import api from '../api/axios'
+import * as db from '../services/api'
 import { useRealtimeRefresh } from '../services/realtime'
 import Icon from '../components/Icon'
 import {
@@ -73,7 +73,7 @@ export default function Viajes() {
   const navigate = useNavigate()
 
   // ====== CARGA INICIAL ======
-  const cargarViajes = () => api.get<Viaje[]>('/viajes').then(r => setViajes(r.data)).catch(() => {})
+  const cargarViajes = async () => { const v = await db.listViajes(); setViajes(v) }
   useEffect(() => { cargarViajes() }, [])
   useRealtimeRefresh(tabla => {
     if (tabla === 'viajes') cargarViajes()
@@ -82,24 +82,23 @@ export default function Viajes() {
   })
 
   // Carga zonas
-  const cargarZonas = () => api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
+  const cargarZonas = async () => { const z = await db.listZonas(); setZonas(z) }
   useEffect(() => { cargarZonas() }, [])
 
   // Carga todos los clientes una sola vez y los agrupa por zona.
-  const cargarClientesTodos = () => {
-    api.get<Cliente[]>('/clientes').then(r => {
-      setTodosClientes(r.data)
-      const map = {} as Record<number | string, Cliente[]>
-      map['TODOS'] = r.data
-      for (const z of zonas) {
-        map[z.id] = r.data.filter(c => c.zonaId === z.id)
-      }
-      setClientesPorZona(map)
-    }).catch(() => {})
+  const cargarClientesTodos = async () => {
+    const clientes = await db.listClientes()
+    setTodosClientes(clientes)
+    const map = {} as Record<number | string, Cliente[]>
+    map['TODOS'] = clientes
+    for (const z of zonas) {
+      map[z.id] = clientes.filter(c => c.zonaId === z.id)
+    }
+    setClientesPorZona(map)
   }
   useEffect(() => { cargarClientesTodos() }, [zonas])
 
-  const cargarBodega = () => api.get<Vino[]>('/vinos/admin').then(r => setBodega(r.data.filter(v => v.activo))).catch(() => {})
+  const cargarBodega = async () => { const v = await db.listVinos(); setBodega(v.filter(v => v.activo)) }
   useEffect(() => { cargarBodega() }, [])
 
   // ====== HELPERS ======
@@ -228,22 +227,30 @@ export default function Viajes() {
     if (!hayAlgoEnViaje) return
     setLoading(true)
     try {
-      const paradas = clientesEnViaje.map(c => ({
-        clienteId: c.id,
-        items: Object.entries(pedido[c.id] ?? {})
-          .map(([vId, n]) => ({ vinoId: Number(vId), cantidad: n }))
-          .filter(it => it.cantidad > 0),
-      }))
-      const extrasInput = Object.entries(extras)
-        .map(([vId, n]) => ({ vinoId: Number(vId), cantidad: n }))
-        .filter(it => it.cantidad > 0)
-      const r = await api.post<{ id: number }>('/viajes', {
+      const paradas = clientesEnViaje.map((c, idx) => {
+        const items = Object.entries(pedido[c.id] ?? {})
+          .map(([vId, n]) => {
+            const v = bodega.find(b => b.id === Number(vId))
+            return { id: 0, vinoId: Number(vId), vinoNombre: v?.nombre ?? '—', cantidad: n }
+          })
+          .filter(it => it.cantidad > 0)
+        return {
+          id: 0,
+          cliente: c,
+          orden: idx + 1,
+          estado: 'PENDIENTE' as const,
+          notas: null,
+          horaVisita: null,
+          items,
+          cantidadProductos: items.reduce((acc, it) => acc + it.cantidad, 0),
+        }
+      })
+      const viaje = await db.createViaje({
         fecha,
         titulo: `Recorrido ${nombreZona(zonaSel)} · ${fmtCorto(fecha)}`,
         paradas,
-        extras: extrasInput,
       })
-      navigate(`/app/viajes/${r.data.id}`)
+      navigate(`/app/viajes/${viaje.id}`)
     } finally { setLoading(false) }
   }
 

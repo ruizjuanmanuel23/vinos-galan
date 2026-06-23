@@ -202,6 +202,36 @@ export async function getViaje(id: number): Promise<Viaje | null> {
   return viajes.find(v => v.id === id) ?? null
 }
 
+export async function createViaje(v: Partial<Viaje>): Promise<Viaje> {
+  const viajes = await listViajes()
+  const newId = Math.max(0, ...viajes.map(x => x.id ?? 0)) + 1
+  const viaje: Viaje = {
+    id: newId,
+    fecha: v.fecha ?? '',
+    titulo: v.titulo ?? null,
+    notas: v.notas ?? null,
+    estado: 'EN_CURSO',
+    inicio: v.inicio ?? null,
+    fin: v.fin ?? null,
+    paradas: v.paradas ?? [],
+    cantidadTotalManual: v.cantidadTotalManual ?? null,
+    cargado: v.cargado ?? false,
+    fechaCarga: v.fechaCarga ?? null,
+  }
+  viajes.push(viaje)
+  saveToStorage(STORAGE_KEYS.viajes, viajes)
+  return viaje
+}
+
+export async function updateViaje(id: number, v: Partial<Viaje>): Promise<Viaje> {
+  const viajes = await listViajes()
+  const idx = viajes.findIndex(x => x.id === id)
+  if (idx === -1) throw new Error('Viaje no encontrado')
+  viajes[idx] = { ...viajes[idx], ...v, id }
+  saveToStorage(STORAGE_KEYS.viajes, viajes)
+  return viajes[idx]
+}
+
 // ============================================================
 // Deudas
 // ============================================================
