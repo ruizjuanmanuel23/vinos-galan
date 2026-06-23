@@ -443,22 +443,10 @@ export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
         </div>
       </div>
       <div>
-        <label className="label">Dirección</label>
-        <input
-          className="input"
-          data-test="direccion"
-          value={form.direccion}
-          onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))}
-          placeholder="Calle, número y localidad (escribí para buscar en el mapa)..."
+        <MapPicker
+          address={form.direccion}
+          onAddressChange={(addr) => setForm(f => ({ ...f, direccion: addr }))}
         />
-        {form.direccion.trim().length > 2 && (
-          <div className="mt-2">
-            <MapPicker
-              address={form.direccion}
-              onAddressChange={(addr) => setForm(f => ({ ...f, direccion: addr }))}
-            />
-          </div>
-        )}
       </div>
 
       <div>
