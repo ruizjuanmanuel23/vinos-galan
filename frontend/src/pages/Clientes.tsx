@@ -398,12 +398,26 @@ export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
       } />
       <div>
         <label className="label">Nombre *</label>
-        <input className="input" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} />
+        <input
+          className="input"
+          data-test="nombre"
+          value={form.nombre}
+          onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
+          placeholder="Nombre del negocio"
+        />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="label">Teléfono</label>
-          <input className="input" type="tel" inputMode="tel" value={form.telefono} onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))} />
+          <input
+            className="input"
+            type="tel"
+            data-test="telefono"
+            inputMode="tel"
+            value={form.telefono}
+            onChange={e => setForm(f => ({ ...f, telefono: e.target.value }))}
+            placeholder="1145556677"
+          />
         </div>
         <div>
           <label className="label">Grupo de zonas</label>
@@ -435,6 +449,7 @@ export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
         <div className="flex gap-2">
           <input
             className="input flex-1"
+            data-test="direccion"
             value={form.direccion}
             onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))}
             placeholder="Calle, número y localidad..."
@@ -464,7 +479,14 @@ export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
 
       <div>
         <label className="label">Notas</label>
-        <textarea className="input resize-none" rows={3} value={form.notas} onChange={e => setForm(f => ({ ...f, notas: e.target.value }))} />
+        <textarea
+          className="input resize-none"
+          data-test="notas"
+          rows={3}
+          value={form.notas}
+          onChange={e => setForm(f => ({ ...f, notas: e.target.value }))}
+          placeholder="Información adicional..."
+        />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
