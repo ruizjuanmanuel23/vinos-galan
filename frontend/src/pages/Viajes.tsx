@@ -33,31 +33,32 @@ type Pedido = Record<number, Record<number, number>>
 /** Extras del viaje: vinoId → cantidad (productos sueltos sin cliente) */
 type Extras = Record<number, number>
 
+import { type Zona } from '../types'
+
 export default function Viajes() {
   // ====== DATOS ======
   const [viajes, setViajes] = useState<Viaje[]>([])
   const [bodega, setBodega] = useState<Vino[]>([])
   const [todosClientes, setTodosClientes] = useState<Cliente[]>([])
-  const [clientesPorDia, setClientesPorDia] = useState<Record<DiaSemana, Cliente[]>>({} as Record<DiaSemana, Cliente[]>)
+  const [zonas, setZonas] = useState<Zona[]>([])
+  const [clientesPorZona, setClientesPorZona] = useState<Record<number | string, Cliente[]>>({} as Record<number | string, Cliente[]>)
 
   // ====== ESTADO DEL ARMADO DE VIAJE ======
-  /** 'TODOS' muestra absolutamente todos los clientes cargados, sin filtrar por día. */
-  const [diaSel, setDiaSel] = useState<DiaSemana | 'TODOS'>(diaSemanaHoy())
+  /** Selector de barrio/zona en lugar de día */
+  const [zonaSel, setZonaSel] = useState<'TODOS' | number>('TODOS')
   const [pedido, setPedido] = useState<Pedido>({})
   const [extras, setExtras] = useState<Extras>({})
   const [clienteActivoId, setClienteActivoId] = useState<number | null>(null)
   const [fecha, setFecha] = useState(new Date().toISOString().slice(0, 10))
 
-  // Sincronización día↔fecha
-  const elegirDia = (d: DiaSemana | 'TODOS') => {
-    setDiaSel(d)
-    if (d !== 'TODOS') setFecha(proximaFechaDelDia(d))
+  // Selector de zona
+  const elegirZona = (z: 'TODOS' | number) => {
+    setZonaSel(z)
     setClienteActivoId(null)
   }
   const elegirFecha = (nuevaFecha: string) => {
     if (!nuevaFecha) return
     setFecha(nuevaFecha)
-    setDiaSel(diaSemanaDeFecha(nuevaFecha))
     setClienteActivoId(null)
   }
   const [busqCli, setBusqCli] = useState('')
@@ -80,38 +81,44 @@ export default function Viajes() {
     if (tabla === 'vinos') cargarBodega()
   })
 
-  // Carga todos los clientes una sola vez y los agrupa por día.
-  // Un cliente puede aparecer en VARIOS días si tiene varios en diasReparto.
+  // Carga zonas
+  const cargarZonas = () => api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
+  useEffect(() => { cargarZonas() }, [])
+
+  // Carga todos los clientes una sola vez y los agrupa por zona.
   const cargarClientesTodos = () => {
     api.get<Cliente[]>('/clientes').then(r => {
       setTodosClientes(r.data)
-      const map = {} as Record<DiaSemana, Cliente[]>
-      for (const d of DIAS_SEMANA) map[d] = []
-      for (const c of r.data) {
-        for (const d of (c.diasReparto ?? [])) {
-          if (map[d]) map[d].push(c)
-        }
+      const map = {} as Record<number | string, Cliente[]>
+      map['TODOS'] = r.data
+      for (const z of zonas) {
+        map[z.id] = r.data.filter(c => c.zonaId === z.id)
       }
-      setClientesPorDia(map)
+      setClientesPorZona(map)
     }).catch(() => {})
   }
-  useEffect(() => { cargarClientesTodos() }, [])
+  useEffect(() => { cargarClientesTodos() }, [zonas])
 
   const cargarBodega = () => api.get<Vino[]>('/vinos/admin').then(r => setBodega(r.data.filter(v => v.activo))).catch(() => {})
   useEffect(() => { cargarBodega() }, [])
 
   // ====== HELPERS ======
-  /** Clientes a mostrar en la columna izq: del día seleccionado, o TODOS los cargados. */
-  const clientesDia = diaSel === 'TODOS' ? todosClientes : (clientesPorDia[diaSel] ?? [])
+  const nombreZona = (id: number | 'TODOS') => {
+    if (id === 'TODOS') return 'todos los barrios'
+    const z = zonas.find(z => z.id === id)
+    return z?.nombre ?? 'desconocido'
+  }
+  /** Clientes a mostrar: de la zona seleccionada, o TODOS los cargados. */
+  const clientesZona = zonaSel === 'TODOS' ? todosClientes : (clientesPorZona[zonaSel] ?? [])
 
   const clientesFiltrados = useMemo(() => {
-    if (!busqCli.trim()) return clientesDia
+    if (!busqCli.trim()) return clientesZona
     const q = busqCli.toLowerCase()
-    return clientesDia.filter(c =>
+    return clientesZona.filter(c =>
       c.nombre.toLowerCase().includes(q) ||
       (c.direccion ?? '').toLowerCase().includes(q)
     )
-  }, [clientesDia, busqCli])
+  }, [clientesZona, busqCli])
 
   const cantidadCliente = (cId: number) =>
     Object.values(pedido[cId] ?? {}).reduce((acc, n) => acc + n, 0)
@@ -232,7 +239,7 @@ export default function Viajes() {
         .filter(it => it.cantidad > 0)
       const r = await api.post<{ id: number }>('/viajes', {
         fecha,
-        titulo: `Recorrido ${diaSel === 'TODOS' ? 'mixto' : DIA_LABEL[diaSel]} · ${fmtCorto(fecha)}`,
+        titulo: `Recorrido ${nombreZona(zonaSel)} · ${fmtCorto(fecha)}`,
         paradas,
         extras: extrasInput,
       })
@@ -262,38 +269,38 @@ export default function Viajes() {
         </div>
       </div>
 
-      {/* SELECTOR DE DÍA */}
+      {/* SELECTOR DE BARRIO/ZONA */}
       <div className="scroll-h">
         <div className="flex gap-1.5 w-max">
           {/* Botón "TODOS" — muestra absolutamente todos los clientes cargados */}
           <button
-            onClick={() => elegirDia('TODOS')}
+            onClick={() => elegirZona('TODOS')}
             className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition flex items-center gap-2 border-2 ${
-              diaSel === 'TODOS'
+              zonaSel === 'TODOS'
                 ? 'bg-dorado-500 text-botella-950 border-dorado-500 shadow-md'
                 : 'bg-white text-gray-700 border-gray-200 hover:border-dorado-400 active:bg-dorado-50'
             }`}
           >
             Todos
             <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
-              diaSel === 'TODOS' ? 'bg-botella-900/20 text-botella-900' : 'bg-gray-100 text-gray-500'
+              zonaSel === 'TODOS' ? 'bg-botella-900/20 text-botella-900' : 'bg-gray-100 text-gray-500'
             }`}>{todosClientes.length}</span>
           </button>
-          {DIAS_SEMANA.map(d => {
-            const activo = diaSel === d
-            const cant = (clientesPorDia[d] ?? []).length
+          {zonas.map(z => {
+            const activo = zonaSel === z.id
+            const cant = (clientesPorZona[z.id] ?? []).length
             return (
               <button
-                key={d}
-                onClick={() => elegirDia(d)}
+                key={z.id}
+                onClick={() => elegirZona(z.id)}
                 className={`px-4 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap transition flex items-center gap-2 border-2 ${
                   activo
                     ? 'bg-botella-700 text-white border-botella-700 shadow-md'
                     : 'bg-white text-gray-700 border-gray-200 hover:border-botella-300 active:bg-botella-50'
                 }`}
               >
-                <span className="sm:hidden">{DIA_CORTO[d]}</span>
-                <span className="hidden sm:inline">{DIA_LABEL[d]}</span>
+                <Icon name="map-pin" className="w-4 h-4" />
+                {z.nombre}
                 <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-full ${
                   activo ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-500'
                 }`}>{cant}</span>
@@ -311,7 +318,7 @@ export default function Viajes() {
             <div className="flex items-center justify-between gap-2">
               <h2 className="font-black text-botella-900 text-sm sm:text-base flex items-center gap-2">
                 <Icon name="users" className="w-5 h-5 text-botella-700" />
-                Clientes · {diaSel === 'TODOS' ? 'todos' : DIA_LABEL[diaSel]}
+                Clientes · {zonaSel === 'TODOS' ? 'todos' : nombreZona(zonaSel)}
               </h2>
               {clientesEnViaje.length > 0 && (
                 <span className="text-[10px] font-black text-white bg-botella-700 px-2 py-1 rounded-full">
@@ -334,11 +341,11 @@ export default function Viajes() {
               <div className="p-8 text-center">
                 <Icon name="inbox" className="w-10 h-10 text-gray-200 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-gray-500">
-                  {clientesDia.length === 0
-                    ? (diaSel === 'TODOS' ? 'No hay clientes cargados' : `Sin clientes para ${DIA_LABEL[diaSel].toLowerCase()}`)
+                  {clientesZona.length === 0
+                    ? (zonaSel === 'TODOS' ? 'No hay clientes cargados' : `Sin clientes para ${nombreZona(zonaSel).toLowerCase()}`)
                     : 'Sin resultados'}
                 </p>
-                {clientesDia.length === 0 && (
+                {clientesZona.length === 0 && (
                   <p className="text-xs text-gray-400 mt-1">Asigná el día desde la ficha del cliente</p>
                 )}
               </div>
