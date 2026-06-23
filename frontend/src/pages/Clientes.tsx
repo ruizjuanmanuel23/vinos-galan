@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import * as db from '../services/api'
 import { useRealtimeRefresh } from '../services/realtime'
 import Modal from '../components/Modal'
-import LocationPicker from '../components/LocationPicker'
+import MapPicker from '../components/LocationPicker'
 import Icon from '../components/Icon'
 import {
   DIAS_SEMANA, DIA_LABEL, aplicarVariables, whatsappCliente,
@@ -389,8 +389,6 @@ export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
   onSubmit: () => void
   onCancel: () => void
 }) {
-  const [showMapPicker, setShowMapPicker] = useState(false)
-
   return (
     <div className="space-y-4">
       <BotonImportarContacto onImport={(nombre, telefono) =>
@@ -446,36 +444,22 @@ export function ClienteForm({ form, setForm, zonas, onSubmit, onCancel }: {
       </div>
       <div>
         <label className="label">Dirección</label>
-        <div className="flex gap-2">
-          <input
-            className="input flex-1"
-            data-test="direccion"
-            value={form.direccion}
-            onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))}
-            placeholder="Calle, número y localidad..."
-          />
-          <button
-            type="button"
-            onClick={() => setShowMapPicker(true)}
-            className="px-3 py-2 rounded-lg bg-botella-100 hover:bg-botella-200 text-botella-700 font-semibold transition text-sm"
-            title="Seleccionar en mapa"
-          >
-            📍
-          </button>
-        </div>
-      </div>
-
-      {/* Modal de selección de ubicación */}
-      <Modal open={showMapPicker} onClose={() => setShowMapPicker(false)} title="Seleccionar dirección" size="lg">
-        <LocationPicker
-          initialAddress={form.direccion}
-          onSelect={(address) => {
-            setForm(f => ({ ...f, direccion: address }))
-            setShowMapPicker(false)
-          }}
-          onClose={() => setShowMapPicker(false)}
+        <input
+          className="input"
+          data-test="direccion"
+          value={form.direccion}
+          onChange={e => setForm(f => ({ ...f, direccion: e.target.value }))}
+          placeholder="Calle, número y localidad (escribí para buscar en el mapa)..."
         />
-      </Modal>
+        {form.direccion.trim().length > 2 && (
+          <div className="mt-2">
+            <MapPicker
+              address={form.direccion}
+              onAddressChange={(addr) => setForm(f => ({ ...f, direccion: addr }))}
+            />
+          </div>
+        )}
+      </div>
 
       <div>
         <label className="label">Notas</label>

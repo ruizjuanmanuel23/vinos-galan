@@ -2,48 +2,47 @@ import { useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
-interface LocationPickerProps {
-  onSelect: (address: string) => void
-  onClose: () => void
-  initialAddress?: string
+interface MapPickerProps {
+  address: string
+  onAddressChange: (address: string) => void
 }
 
-interface MapMarker {
-  lat: number
-  lng: number
-}
-
-export default function LocationPicker({ onSelect, onClose, initialAddress = '' }: LocationPickerProps) {
-  const [address, setAddress] = useState(initialAddress)
+export default function MapPicker({ address, onAddressChange }: MapPickerProps) {
   const [suggestions, setSuggestions] = useState<any[]>([])
-  const [marker, setMarker] = useState<MapMarker | null>(null)
+  const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(null)
+  const [showMap, setShowMap] = useState(false)
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstance = useRef<L.Map | null>(null)
   const markerInstance = useRef<L.Marker | null>(null)
   const searchTimeout = useRef<NodeJS.Timeout>()
 
-  // Inicializar mapa
+  // Inicializar mapa cuando se muestra
   useEffect(() => {
-    if (!mapRef.current) return
+    if (!showMap || !mapRef.current) return
 
-    mapInstance.current = L.map(mapRef.current).setView([-34.9011, -57.9537], 13)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '© OpenStreetMap contributors',
-      maxZoom: 19,
-    }).addTo(mapInstance.current)
+    setTimeout(() => {
+      if (!mapRef.current) return
+      mapInstance.current = L.map(mapRef.current).setView([-34.9011, -57.9537], 13)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19,
+      }).addTo(mapInstance.current)
 
-    // Click en el mapa para seleccionar
-    mapInstance.current.on('click', (e) => {
-      const { lat, lng } = e.latlng
-      setMarker({ lat, lng })
-      updateMarker(lat, lng)
-      reverseGeocode(lat, lng)
-    })
+      mapInstance.current.on('click', (e) => {
+        const { lat, lng } = e.latlng
+        setMarker({ lat, lng })
+        updateMarker(lat, lng)
+        reverseGeocode(lat, lng)
+      })
+    }, 0)
 
     return () => {
-      mapInstance.current?.remove()
+      if (mapInstance.current) {
+        mapInstance.current.remove()
+        mapInstance.current = null
+      }
     }
-  }, [])
+  }, [showMap])
 
   const updateMarker = (lat: number, lng: number) => {
     if (markerInstance.current) {
@@ -51,7 +50,9 @@ export default function LocationPicker({ onSelect, onClose, initialAddress = '' 
     } else if (mapInstance.current) {
       markerInstance.current = L.marker([lat, lng]).addTo(mapInstance.current)
     }
-    mapInstance.current?.setView([lat, lng], 15)
+    if (mapInstance.current) {
+      mapInstance.current.setView([lat, lng], 15)
+    }
   }
 
   const reverseGeocode = async (lat: number, lng: number) => {
@@ -59,94 +60,80 @@ export default function LocationPicker({ onSelect, onClose, initialAddress = '' 
       const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
       const data = await res.json()
       if (data.address) {
-        setAddress(data.address.road || data.address.street || data.display_name)
+        const addr = data.address.road || data.address.street || data.display_name
+        onAddressChange(addr)
       }
     } catch (e) {
-      console.error('Reverse geocoding failed:', e)
+      console.error('Error:', e)
     }
   }
 
   const searchAddress = async (query: string) => {
     if (query.length < 3) {
       setSuggestions([])
+      setShowMap(false)
       return
     }
 
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ar&limit=5`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ar&limit=8`
       )
       const data = await res.json()
       setSuggestions(data)
+      setShowMap(data.length > 0)
+
+      if (data.length > 0) {
+        const lat = parseFloat(data[0].lat)
+        const lng = parseFloat(data[0].lon)
+        setMarker({ lat, lng })
+        setTimeout(() => updateMarker(lat, lng), 100)
+      }
     } catch (e) {
-      console.error('Search failed:', e)
+      console.error('Search error:', e)
     }
   }
 
-  const handleAddressChange = (value: string) => {
-    setAddress(value)
+  const handleAddressInput = (value: string) => {
+    onAddressChange(value)
     clearTimeout(searchTimeout.current)
-    searchTimeout.current = setTimeout(() => searchAddress(value), 500)
-  }
-
-  const selectSuggestion = (suggestion: any) => {
-    const displayName = suggestion.display_name || suggestion.address?.road || ''
-    setAddress(displayName)
-    setSuggestions([])
-
-    const lat = parseFloat(suggestion.lat)
-    const lng = parseFloat(suggestion.lon)
-    setMarker({ lat, lng })
-    updateMarker(lat, lng)
+    searchTimeout.current = setTimeout(() => searchAddress(value), 600)
   }
 
   return (
-    <div className="space-y-4">
-      <div>
-        <label className="label">Buscar dirección</label>
-        <input
-          type="text"
-          value={address}
-          onChange={(e) => handleAddressChange(e.target.value)}
-          placeholder="Calle, número, localidad..."
-          className="input"
-          autoComplete="off"
-        />
-        {suggestions.length > 0 && (
-          <div className="absolute top-full left-0 right-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 mt-1 max-w-md">
-            {suggestions.map((s, i) => (
-              <button
-                key={i}
-                onClick={() => selectSuggestion(s)}
-                className="w-full text-left px-4 py-2.5 hover:bg-gray-50 border-b border-gray-100 last:border-0 text-sm"
-              >
-                📍 {s.display_name?.split(',')?.slice(0, 3)?.join(',') || s.display_name}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+    <div className="space-y-2">
+      {suggestions.length > 0 && (
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-2 max-h-32 overflow-y-auto">
+          <p className="text-xs text-blue-700 font-bold mb-1">Direcciones aproximadas:</p>
+          {suggestions.slice(0, 5).map((s, i) => (
+            <button
+              key={i}
+              onClick={() => {
+                const lat = parseFloat(s.lat)
+                const lng = parseFloat(s.lon)
+                setMarker({ lat, lng })
+                updateMarker(lat, lng)
+                onAddressChange(s.display_name)
+              }}
+              className="w-full text-left text-xs px-2 py-1.5 hover:bg-blue-100 rounded transition text-gray-700"
+            >
+              📍 {s.display_name?.split(',')?.slice(0, 2)?.join(',')?.trim()}
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div>
-        <label className="label">Seleccioná en el mapa (clickeá para marcar)</label>
-        <div ref={mapRef} className="w-full h-80 rounded-lg border border-gray-200 bg-gray-50" />
-        {marker && (
-          <p className="text-xs text-gray-500 mt-2">
-            📍 {marker.lat.toFixed(4)}, {marker.lng.toFixed(4)}
-          </p>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <button onClick={onClose} className="btn-ghost">Cancelar</button>
-        <button
-          onClick={() => onSelect(address)}
-          disabled={!address.trim()}
-          className="btn-primary disabled:opacity-50"
-        >
-          Guardar ubicación
-        </button>
-      </div>
+      {showMap && (
+        <div className="space-y-2">
+          <p className="text-xs text-gray-600 font-semibold">Clickeá en el mapa para ajustar la ubicación exacta</p>
+          <div ref={mapRef} className="w-full h-64 rounded-lg border-2 border-dorado-300 shadow-lg" />
+          {marker && (
+            <p className="text-xs text-gray-500 text-center">
+              📍 {marker.lat.toFixed(5)}, {marker.lng.toFixed(5)}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
