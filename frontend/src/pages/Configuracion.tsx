@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import api from '../api/axios'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
-import { aplicarVariables, type PlantillaWhatsApp, type Cliente, type Zona } from '../types'
+import { aplicarVariables, type PlantillaWhatsApp, type Cliente } from '../types'
 
 const VARIABLES = [
   { key: '{nombre}',    desc: 'Nombre del cliente' },
@@ -34,41 +34,8 @@ export default function Configuracion() {
   const [editandoId, setEditandoId] = useState<number | null>(null)
   const [form, setForm] = useState(EMPTY)
 
-  // === ZONAS ===
-  const [zonas, setZonas] = useState<Zona[]>([])
-  const [nuevaZonaNombre, setNuevaZonaNombre] = useState('')
-  const [nuevaZonaAjuste, setNuevaZonaAjuste] = useState('0')
-  const [editZonaId, setEditZonaId] = useState<number | null>(null)
-  const [editZonaNombre, setEditZonaNombre] = useState('')
-  const [editZonaAjuste, setEditZonaAjuste] = useState('0')
-
   const cargar = () => api.get<PlantillaWhatsApp[]>('/plantillas').then(r => setPlantillas(r.data)).catch(() => {})
-  const cargarZonas = () => api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
-  useEffect(() => { cargar(); cargarZonas() }, [])
-
-  const crearZona = async () => {
-    const nombre = nuevaZonaNombre.trim()
-    if (!nombre) return
-    await api.post('/zonas', {
-      nombre,
-      ajustePorcentaje: Number(nuevaZonaAjuste) || 0,
-      orden: zonas.length,
-    }).catch((e) => alert(`No se pudo crear la zona. ${e?.message ?? ''}`))
-    setNuevaZonaNombre(''); setNuevaZonaAjuste('0')
-    cargarZonas()
-  }
-  const guardarZona = async (id: number) => {
-    if (!editZonaNombre.trim()) return
-    await api.put(`/zonas/${id}`, {
-      nombre: editZonaNombre.trim(),
-      ajustePorcentaje: Number(editZonaAjuste) || 0,
-    }).catch(() => {})
-    setEditZonaId(null); cargarZonas()
-  }
-  const eliminarZona = async (z: Zona) => {
-    if (!confirm(`¿Eliminar la zona "${z.nombre}"? Los clientes y precios que estén asignados a ella van a quedar sin zona.`)) return
-    await api.delete(`/zonas/${z.id}`); cargarZonas()
-  }
+  useEffect(() => { cargar() }, [])
 
   const abrirNuevo = () => {
     setEditandoId(null)
@@ -107,132 +74,7 @@ export default function Configuracion() {
         <p className="page-subtitle">Zonas de reparto y plantillas de WhatsApp</p>
       </div>
 
-      {/* ZONAS DE REPARTO */}
-      <section className="card overflow-hidden">
-        <div className="px-4 sm:px-5 py-4 border-b border-gray-100 bg-gradient-to-r from-botella-50 to-white">
-          <div className="flex items-center gap-2 mb-1">
-            <Icon name="map-pin" className="w-5 h-5 text-botella-700" />
-            <h2 className="text-sm sm:text-base font-black text-botella-900">Grupos de zonas</h2>
-          </div>
-          <p className="text-xs text-gray-600">
-            Agrupá los clientes por zona (Berisso, Magdalena, La Plata, etc) y poné un ajuste de precio porcentual.
-            El ajuste se aplica automáticamente a todos los vinos en esa zona.
-          </p>
-        </div>
-
-        {/* Listado */}
-        <div className="divide-y divide-gray-100">
-          {zonas.length === 0 && (
-            <p className="p-8 text-center text-sm text-gray-400">
-              Sin zonas todavía. Cargá la primera abajo.
-            </p>
-          )}
-          {zonas.map(z => {
-            const enEdicion = editZonaId === z.id
-            return (
-              <div key={z.id} className="px-4 py-3 flex items-center gap-3">
-                {enEdicion ? (
-                  <>
-                    <input
-                      className="input flex-1"
-                      value={editZonaNombre}
-                      onChange={e => setEditZonaNombre(e.target.value)}
-                      placeholder="Nombre"
-                      autoFocus
-                    />
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <input
-                        className="input w-20 text-center"
-                        type="number"
-                        step="0.5"
-                        value={editZonaAjuste}
-                        onChange={e => setEditZonaAjuste(e.target.value)}
-                      />
-                      <span className="text-xs text-gray-500 font-bold">%</span>
-                    </div>
-                    <div className="flex gap-1 shrink-0">
-                      <button onClick={() => guardarZona(z.id)} className="text-xs font-bold text-emerald-700 hover:bg-emerald-50 px-2 py-1 rounded">Guardar</button>
-                      <button onClick={() => setEditZonaId(null)} className="text-xs text-gray-500 hover:bg-gray-50 px-2 py-1 rounded">Cancelar</button>
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-9 h-9 rounded-full bg-botella-100 text-botella-700 font-black text-sm flex items-center justify-center shrink-0">
-                      {z.nombre.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-gray-900 truncate">{z.nombre}</p>
-                      <p className="text-xs text-gray-500">
-                        {z.ajustePorcentaje === 0
-                          ? 'Precio base (sin ajuste)'
-                          : z.ajustePorcentaje > 0
-                            ? `+${z.ajustePorcentaje}% sobre el precio base`
-                            : `${z.ajustePorcentaje}% sobre el precio base`}
-                      </p>
-                    </div>
-                    <span className={`chip shrink-0 ${
-                      z.ajustePorcentaje === 0
-                        ? 'bg-gray-100 text-gray-600'
-                        : z.ajustePorcentaje > 0
-                          ? 'bg-dorado-100 text-dorado-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                    }`}>
-                      {z.ajustePorcentaje > 0 ? '+' : ''}{z.ajustePorcentaje}%
-                    </span>
-                    <div className="flex gap-0.5 shrink-0">
-                      <button
-                        onClick={() => {
-                          setEditZonaId(z.id)
-                          setEditZonaNombre(z.nombre)
-                          setEditZonaAjuste(String(z.ajustePorcentaje))
-                        }}
-                        className="w-8 h-8 rounded text-botella-700 hover:bg-botella-50 flex items-center justify-center"
-                        title="Editar"
-                      ><Icon name="pencil" className="w-4 h-4" /></button>
-                      <button
-                        onClick={() => eliminarZona(z)}
-                        className="w-8 h-8 rounded text-red-500 hover:bg-red-50 flex items-center justify-center"
-                        title="Eliminar"
-                      ><Icon name="trash" className="w-4 h-4" /></button>
-                    </div>
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        {/* Crear nueva */}
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-          <p className="text-[10px] uppercase tracking-wide font-bold text-gray-500 mb-2">Agregar zona</p>
-          <div className="flex gap-2 flex-wrap sm:flex-nowrap">
-            <input
-              className="input flex-1 min-w-[140px]"
-              placeholder='Ej: "Berisso"'
-              value={nuevaZonaNombre}
-              onChange={e => setNuevaZonaNombre(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') crearZona() }}
-            />
-            <div className="flex items-center gap-1.5">
-              <input
-                className="input w-20 text-center"
-                type="number"
-                step="0.5"
-                placeholder="0"
-                value={nuevaZonaAjuste}
-                onChange={e => setNuevaZonaAjuste(e.target.value)}
-              />
-              <span className="text-xs text-gray-500 font-bold">%</span>
-            </div>
-            <button onClick={crearZona} className="btn-primary text-sm shrink-0">+ Agregar</button>
-          </div>
-          <p className="text-[10px] text-gray-500 mt-2">
-            El % es opcional. Dejá 0 si esta zona usa el precio base. Poné +10 para subir 10%, −5 para descontar 5%.
-          </p>
-        </div>
-      </section>
-
-      {/* Info */}
+{/* Info */}
       <div className="card p-4 sm:p-5 bg-emerald-50/50 border-emerald-200 border-l-4">
         <div className="flex items-start gap-3">
           <span className="text-3xl shrink-0">💬</span>
