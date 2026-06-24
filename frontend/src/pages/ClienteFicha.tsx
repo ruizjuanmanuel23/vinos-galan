@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import api from '../api/axios'
+import * as db from '../services/api'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
 import { ClienteForm } from './Clientes'
@@ -12,6 +12,7 @@ import {
 export default function ClienteFicha() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const clienteId = Number(id)
   const [cliente, setCliente] = useState<Cliente | null>(null)
   const [plantillas, setPlantillas] = useState<PlantillaWhatsApp[]>([])
   const [zonas, setZonas] = useState<Zona[]>([])
@@ -26,24 +27,28 @@ export default function ClienteFicha() {
   const [formDeuda, setFormDeuda] = useState({ descripcion: '', monto: '', fecha: '' })
   const [editDeuda, setEditDeuda] = useState<DeudaAnotacion | null>(null)
 
-  const cargar = () => {
-    api.get<Cliente>(`/clientes/${id}`).then(r => {
-      setCliente(r.data)
+  const cargar = async () => {
+    const c = await db.getCliente(clienteId)
+    if (c) {
+      setCliente(c)
       setFormCliente({
-        nombre: r.data.nombre, telefono: r.data.telefono ?? '',
-        direccion: r.data.direccion ?? '', zona: r.data.zona ?? '',
-        zonaId: r.data.zonaId ?? null,
-        diasReparto: r.data.diasReparto ?? [], notas: r.data.notas ?? ''
+        nombre: c.nombre, telefono: c.telefono ?? '',
+        direccion: c.direccion ?? '', zona: c.zona ?? '',
+        zonaId: c.zonaId ?? null,
+        diasReparto: c.diasReparto ?? [], notas: c.notas ?? ''
       })
-    })
-    api.get<Venta[]>(`/ventas/cliente/${id}`).then(r => setVentas(r.data)).catch(() => {})
-    api.get<DeudaAnotacion[]>(`/deudas/cliente/${id}`).then(r => setDeudas(r.data)).catch(() => {})
-    api.get<Zona[]>('/zonas').then(r => setZonas(r.data)).catch(() => {})
+    } else {
+      navigate('/app/clientes')
+    }
+    const v = await db.listVentas()
+    const z = await db.listZonas()
+    setVentas(v)
+    setZonas(z)
   }
 
   useEffect(() => { cargar() }, [id])
   useEffect(() => {
-    api.get<PlantillaWhatsApp[]>('/plantillas').then(r => setPlantillas(r.data)).catch(() => {})
+    db.listPlantillas().then(setPlantillas)
   }, [])
 
   // Cerrar dropdown al click afuera
@@ -64,7 +69,7 @@ export default function ClienteFicha() {
   }
 
   const guardarCliente = async () => {
-    await api.put(`/clientes/${id}`, {
+    await db.updateCliente(clienteId, {
       ...formCliente,
       diasReparto: formCliente.diasReparto ?? [],
       zona: formCliente.zona || null,
@@ -75,9 +80,11 @@ export default function ClienteFicha() {
   const guardarDeuda = async () => {
     const payload = {
       descripcion: formDeuda.descripcion, monto: Number(formDeuda.monto),
-      clienteId: Number(id), fecha: formDeuda.fecha || new Date().toISOString().split('T')[0],
+      clienteId: clienteId, fecha: formDeuda.fecha || new Date().toISOString().split('T')[0],
     }
-    if (editDeuda) await api.put(`/deudas/${editDeuda.id}`, payload)
+    if (editDeuda) {
+      // await db.updateDeuda(editDeuda.id, payload)
+    }
     else await api.post('/deudas', payload)
     setShowDeuda(false); setEditDeuda(null); setFormDeuda({ descripcion: '', monto: '', fecha: '' })
     cargar()
