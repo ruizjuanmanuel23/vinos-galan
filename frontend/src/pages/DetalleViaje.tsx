@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import api from '../api/axios'
+import * as db from '../services/api'
 import Modal from '../components/Modal'
 import Icon from '../components/Icon'
 import {
   cargaDeCamion, totalProductosViaje, cantidadDeParada,
-  type EstadoParada, type Viaje, type Parada, type Vino,
+  type Viaje, type Parada, type Vino,
 } from '../types'
 
 const fmtFecha = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' })
@@ -13,167 +13,66 @@ const fmtHora = (iso: string) => new Date(iso).toLocaleTimeString('es-AR', { hou
 
 export default function DetalleViaje() {
   const { id } = useParams()
+  const viajeId = Number(id)
   const [viaje, setViaje] = useState<Viaje | null>(null)
   const [bodega, setBodega] = useState<Vino[]>([])
-  const [paradaEdit, setParadaEdit] = useState<Parada | null>(null)
-  const [cargando, setCargando] = useState(false)
-  const [errorCarga, setErrorCarga] = useState<string | null>(null)
+  const [paradaVenta, setParadaVenta] = useState<Parada | null>(null)
   const navigate = useNavigate()
 
-  const cargar = () => { api.get<Viaje>(`/viajes/${id}`).then(r => setViaje(r.data)).catch(() => {}) }
-  useEffect(() => {
-    cargar()
-    api.get<Vino[]>('/vinos/admin').then(r => setBodega(r.data.filter(v => v.activo))).catch(() => {})
-  }, [id])
+  const cargar = async () => {
+    const v = await db.getViaje(viajeId)
+    if (!v) { navigate('/app/viajes'); return }
+    setViaje(v)
+    const vinos = await db.listVinos()
+    setBodega(vinos.filter(v => v.activo))
+  }
 
-  const actualizarEstado = async (paradaId: number, estado: EstadoParada) => {
-    await api.put(`/viajes/paradas/${paradaId}`, { estado }); cargar()
-  }
-  const eliminarParada = async (paradaId: number) => {
-    if (!confirm('¿Quitar esta parada?')) return
-    await api.delete(`/viajes/paradas/${paradaId}`); cargar()
-  }
-  const finalizar = async () => {
-    if (!confirm('¿Finalizar el viaje?')) return
-    await api.put(`/viajes/${id}/finalizar`); cargar()
-  }
-  const eliminar = async () => {
-    if (!confirm('¿Eliminar este viaje?')) return
-    await api.delete(`/viajes/${id}`); navigate('/app/viajes')
-  }
-  const cargarCamion = async () => {
-    setCargando(true); setErrorCarga(null)
-    try {
-      await api.post(`/viajes/${id}/cargar`)
-      cargar()
-    } catch (e: any) {
-      const msg = typeof e?.response?.data === 'string' ? e.response.data : 'No se pudo cargar el camión'
-      setErrorCarga(msg)
-    } finally { setCargando(false) }
-  }
-  const descargarCamion = async () => {
-    if (!confirm('¿Descargar el camión? Los productos vuelven a la bodega.')) return
-    await api.post(`/viajes/${id}/descargar`); cargar()
-  }
-  const guardarItems = async (paradaId: number, items: { vinoId: number; cantidad: number }[]) => {
-    await api.put(`/viajes/paradas/${paradaId}/items`, { items })
-    cargar()
-  }
+  useEffect(() => { cargar() }, [viajeId])
 
   if (!viaje) return <p className="text-center text-gray-400 py-12">Cargando...</p>
 
-  // Las paradas reales (clientes); la parada con cliente.id === -1 es la de "extras del camión"
   const paradasReales = viaje.paradas.filter(p => p.cliente.id !== -1)
-  const paradaExtras = viaje.paradas.find(p => p.cliente.id === -1) ?? null
   const visitadas = paradasReales.filter(p => p.estado === 'VISITADA').length
   const total = paradasReales.length
   const progreso = total > 0 ? (visitadas / total) * 100 : 0
   const bloqueado = viaje.estado === 'FINALIZADO'
   const totalProductos = totalProductosViaje(viaje)
   const carga = cargaDeCamion(viaje)
-  const esManual = !!(viaje.cantidadTotalManual && viaje.cantidadTotalManual > 0)
+
+  const actualizar = async (viajeActualizado: Viaje) => {
+    await db.updateViaje(viajeId, viajeActualizado)
+    await cargar()
+  }
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <Link to="/app/viajes" className="text-botella-700 text-sm font-medium hover:underline">← Viajes</Link>
 
+      {/* HEADER */}
       <div className="flex items-start justify-between gap-2 flex-wrap">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="page-title">{viaje.titulo ?? 'Viaje'}</h1>
-            <span className={`chip inline-flex items-center gap-1 ${!bloqueado ? 'bg-dorado-100 text-dorado-800' : 'bg-gray-100 text-gray-600'}`}>
-              {!bloqueado
-                ? <><Icon name="truck" className="w-3 h-3" />En curso</>
-                : <><Icon name="check" className="w-3 h-3" />Finalizado</>}
-            </span>
-            {viaje.cargado && (
-              <span className="chip bg-emerald-100 text-emerald-700 inline-flex items-center gap-1">
-                <Icon name="box" className="w-3 h-3" />Camión cargado
-              </span>
-            )}
-          </div>
+        <div>
+          <h1 className="page-title">{viaje.titulo ?? 'Viaje'}</h1>
           <p className="page-subtitle capitalize">{fmtFecha(viaje.fecha)}</p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <BotonRutaMaps viaje={viaje} bloqueado={bloqueado} />
-          {!bloqueado && <button onClick={finalizar} className="btn-primary text-xs sm:text-sm">Finalizar</button>}
-          <button onClick={eliminar} className="btn-secondary !text-red-600 !border-red-300 text-xs sm:text-sm">Eliminar</button>
+          {!bloqueado && <button onClick={() => actualizar({ ...viaje, estado: 'FINALIZADO' })} className="btn-primary text-xs sm:text-sm">Finalizar</button>}
+          <button onClick={() => navigate('/app/viajes')} className="btn-secondary !text-red-600 text-xs sm:text-sm">Volver</button>
         </div>
       </div>
 
-      {/* CARGA DEL CAMIÓN */}
-      <section className="card overflow-hidden border-l-4 border-dorado-500">
-        <div className="bg-gradient-to-r from-botella-50 via-white to-dorado-50 px-4 sm:px-5 py-4 border-b border-gray-100">
-          <div className="flex items-start justify-between gap-3 flex-wrap">
-            <div>
-              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-botella-700 mb-1">🚛 Carga del camión</p>
-              <div className="flex items-end gap-3 flex-wrap">
-                <p className="text-3xl sm:text-4xl font-black text-botella-900 leading-none">{totalProductos} u.</p>
-                <p className="text-xs text-gray-500 pb-1">
-                  {carga.length > 0 ? `${carga.length} producto${carga.length !== 1 ? 's' : ''} distintos` : esManual ? 'Total manual' : 'Sin desglose'}
-                </p>
-              </div>
-            </div>
-            {!bloqueado && carga.length > 0 && (
-              viaje.cargado ? (
-                <button onClick={descargarCamion} className="btn-secondary text-xs">↩ Descargar camión</button>
-              ) : (
-                <button onClick={cargarCamion} disabled={cargando} className="btn-dorado text-xs sm:text-sm">
-                  {cargando ? 'Cargando...' : '🚛 Cargar camión'}
-                </button>
-              )
-            )}
-          </div>
-          {errorCarga && (
-            <div className="mt-3 bg-red-50 border border-red-200 rounded-lg p-2.5">
-              <p className="text-xs font-bold text-red-800 mb-1">No se pudo cargar:</p>
-              <pre className="text-[11px] text-red-700 whitespace-pre-wrap font-sans">{errorCarga}</pre>
-            </div>
-          )}
-        </div>
-        {carga.length > 0 && (
-          <div className="p-4 sm:p-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {carga.map(c => {
-                const enBodega = bodega.find(b => b.id === c.vinoId)
-                const stockOk = !enBodega || enBodega.stock >= c.cantidad || viaje.cargado
-                return (
-                  <div key={c.vinoId} className={`flex items-center justify-between px-3 py-2 rounded-lg ${stockOk ? 'bg-gray-50' : 'bg-red-50 border border-red-200'}`}>
-                    <div className="min-w-0 flex-1">
-                      <p className="font-bold text-sm text-gray-900 truncate">{c.vinoNombre}</p>
-                      {enBodega && !viaje.cargado && (
-                        <p className="text-[10px] text-gray-500">Stock bodega: {enBodega.stock}</p>
-                      )}
-                    </div>
-                    <span className={`font-black text-lg shrink-0 ml-2 ${stockOk ? 'text-botella-800' : 'text-red-700'}`}>×{c.cantidad}</span>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-      </section>
-
-      {viaje.notas && (
-        <div className="card p-4 bg-dorado-50/50 border-dorado-200">
-          <p className="text-xs font-semibold text-dorado-800 mb-1">Notas</p>
-          <p className="text-sm text-gray-700 italic">{viaje.notas}</p>
-        </div>
-      )}
-
-      {/* Stats paradas */}
+      {/* PROGRESO */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         <div className="card p-3 sm:p-4">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-gray-500">Paradas</p>
-          <p className="text-xl sm:text-2xl font-black text-botella-900 mt-1">{visitadas}/{total}</p>
+          <p className="text-[10px] uppercase tracking-wide font-bold text-gray-500">Paradas</p>
+          <p className="text-2xl font-black text-botella-900 mt-1">{visitadas}/{total}</p>
         </div>
         <div className="card p-3 sm:p-4 bg-emerald-50 border-emerald-200">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-emerald-700">Visitadas</p>
-          <p className="text-xl sm:text-2xl font-black text-emerald-700 mt-1">{visitadas}</p>
+          <p className="text-[10px] uppercase tracking-wide font-bold text-emerald-700">Visitadas</p>
+          <p className="text-2xl font-black text-emerald-700 mt-1">{visitadas}</p>
         </div>
         <div className="card p-3 sm:p-4 bg-dorado-50 border-dorado-200">
-          <p className="text-[10px] sm:text-xs font-semibold uppercase tracking-wide text-dorado-700">Avance</p>
-          <p className="text-xl sm:text-2xl font-black text-dorado-700 mt-1">{Math.round(progreso)}%</p>
+          <p className="text-[10px] uppercase tracking-wide font-bold text-dorado-700">Avance</p>
+          <p className="text-2xl font-black text-dorado-700 mt-1">{Math.round(progreso)}%</p>
         </div>
       </div>
 
@@ -183,275 +82,170 @@ export default function DetalleViaje() {
         </div>
       </div>
 
-      {/* Paradas (clientes reales) */}
+      {/* CARGA */}
+      <div className="card p-4 bg-gradient-to-br from-botella-50 to-white border-l-4 border-dorado-500">
+        <p className="text-[10px] uppercase tracking-wide font-bold text-botella-700 mb-2">🚛 Carga del camión</p>
+        <p className="text-3xl font-black text-botella-900">{totalProductos} unidades</p>
+        {carga.length > 0 && (
+          <div className="mt-3 grid grid-cols-2 gap-2">
+            {carga.map(c => (
+              <div key={c.vinoId} className="text-xs bg-white rounded px-2 py-1">
+                <p className="font-bold text-gray-900 truncate">{c.vinoNombre}</p>
+                <p className="text-gray-500">×{c.cantidad}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* PARADAS */}
       <div>
         <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-3">Paradas ({total})</h2>
         {total === 0 ? (
           <p className="text-center text-gray-400 py-8">Sin paradas.</p>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="space-y-2">
             {paradasReales.map((p, idx) => (
-              <ParadaCard
-                key={p.id}
-                parada={p}
-                numero={idx + 1}
-                onEstado={actualizarEstado}
-                onEditItems={() => setParadaEdit(p)}
-                onEliminar={eliminarParada}
-                bloqueado={bloqueado}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+              <div key={p.id} className="card p-3 sm:p-4 border-l-4 border-dorado-500">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-botella-100 text-botella-800 font-black text-sm flex items-center justify-center shrink-0">{idx + 1}</div>
+                      <div>
+                        <p className="font-bold text-gray-900">{p.cliente.nombre}</p>
+                        {p.cliente.telefono && <p className="text-xs text-gray-500 flex items-center gap-1"><Icon name="phone" className="w-3 h-3" />{p.cliente.telefono}</p>}
+                        {p.cliente.direccion && <p className="text-xs text-gray-500 flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{p.cliente.direccion}</p>}
+                      </div>
+                    </div>
+                  </div>
+                  {p.estado === 'VISITADA' && (
+                    <span className="chip bg-emerald-100 text-emerald-700 shrink-0 text-xs">✓ Visitado</span>
+                  )}
+                </div>
 
-      {/* Extras del camión (parada virtual sin cliente) */}
-      {paradaExtras && paradaExtras.items && paradaExtras.items.length > 0 && (
-        <div className="card overflow-hidden border-l-4 border-gray-400">
-          <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center justify-between">
-            <div>
-              <h3 className="text-sm font-black text-gray-800">📦 Extras del camión</h3>
-              <p className="text-[11px] text-gray-500">Productos sueltos cargados por las dudas, sin cliente asignado</p>
-            </div>
-            <span className="text-lg font-black text-gray-700">{paradaExtras.items.reduce((a, b) => a + b.cantidad, 0)} u.</span>
-          </div>
-          <div className="p-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {paradaExtras.items.map(it => (
-              <div key={it.id} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                <span className="text-sm font-bold text-gray-800 truncate">{it.vinoNombre}</span>
-                <span className="font-black text-base text-botella-800 ml-2 shrink-0">×{it.cantidad}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+                {/* VENTA RÁPIDA AQUÍ */}
+                {!bloqueado && p.estado !== 'VISITADA' && (
+                  <button
+                    onClick={() => setParadaVenta(p)}
+                    className="mt-3 w-full py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition"
+                  >
+                    + REGISTRAR VENTA
+                  </button>
+                )}
 
-      {/* MODAL editar items de una parada */}
-      <ModalEditarItems
-        parada={paradaEdit}
-        bodega={bodega}
-        onClose={() => setParadaEdit(null)}
-        onGuardar={items => paradaEdit && guardarItems(paradaEdit.id, items)}
-      />
-    </div>
-  )
-}
+                {/* Ver productos vendidos */}
+                {(p.items ?? []).length > 0 && (
+                  <div className="mt-3 bg-botella-50/60 border border-botella-200 rounded-lg p-2.5">
+                    <p className="text-[10px] uppercase tracking-wide font-bold text-botella-700 mb-1.5">Productos vendidos</p>
+                    <div className="space-y-0.5">
+                      {p.items.map(it => (
+                        <div key={it.id} className="flex justify-between text-xs text-gray-700">
+                          <span className="truncate">{it.vinoNombre}</span>
+                          <span className="font-bold ml-2 shrink-0">×{it.cantidad}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-/**
- * Botón que arma una ruta en Google Maps con las direcciones de las paradas pendientes.
- * Google Maps optimiza el recorrido y usa la ubicación actual como origen.
- *
- * Notas:
- * - Solo agrega paradas PENDIENTES (las visitadas/omitidas se ignoran).
- * - Última parada se usa como destino, el resto como waypoints.
- * - Si no hay direcciones, el botón queda deshabilitado.
- */
-function BotonRutaMaps({ viaje, bloqueado }: { viaje: Viaje; bloqueado: boolean }) {
-  if (bloqueado) return null
-
-  const paradasConDir = viaje.paradas
-    .filter(p => p.estado === 'PENDIENTE' && p.cliente.direccion?.trim())
-    .map(p => p.cliente.direccion.trim())
-
-  if (paradasConDir.length === 0) return null
-
-  const abrirRuta = () => {
-    // Agrega "La Plata" al final de cada dirección para que Maps no se confunda con calles homónimas
-    const dirs = paradasConDir.map(d => {
-      const tieneCiudad = /la plata/i.test(d) || /buenos aires/i.test(d)
-      return tieneCiudad ? d : `${d}, La Plata, Buenos Aires`
-    })
-    const destino = encodeURIComponent(dirs[dirs.length - 1])
-    const waypoints = dirs.slice(0, -1).map(encodeURIComponent).join('|')
-    const baseUrl = `https://www.google.com/maps/dir/?api=1&destination=${destino}&travelmode=driving`
-    const url = waypoints ? `${baseUrl}&waypoints=${waypoints}` : baseUrl
-    window.open(url, '_blank', 'noopener')
-  }
-
-  return (
-    <button
-      onClick={abrirRuta}
-      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow active:scale-95 transition"
-      title={`Abrir ruta con ${paradasConDir.length} parada${paradasConDir.length !== 1 ? 's' : ''} pendiente${paradasConDir.length !== 1 ? 's' : ''}`}
-    >
-      <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-        <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2V6z" />
-        <line x1="9" y1="4" x2="9" y2="18" />
-        <line x1="15" y1="6" x2="15" y2="20" />
-      </svg>
-      <span className="hidden sm:inline">Ruta en Maps</span>
-      <span className="sm:hidden">Maps</span>
-      <span className="text-[10px] font-black bg-white/20 rounded-full px-1.5 py-0.5">{paradasConDir.length}</span>
-    </button>
-  )
-}
-
-function ParadaCard({ parada, numero, onEstado, onEditItems, onEliminar, bloqueado }: {
-  parada: Parada; numero: number;
-  onEstado: (id: number, e: EstadoParada) => void;
-  onEditItems: () => void;
-  onEliminar: (id: number) => void;
-  bloqueado: boolean;
-}) {
-  const c = parada.cliente
-  const dirGoogle = c.direccion ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.direccion)}` : null
-  const borde =
-    parada.estado === 'VISITADA' ? 'border-l-emerald-500' :
-    parada.estado === 'OMITIDA'  ? 'border-l-gray-400'   : 'border-l-dorado-500'
-
-  const cantTotal = cantidadDeParada(parada)
-  const items = parada.items ?? []
-
-  return (
-    <div className={`card p-3 sm:p-4 border-l-4 ${borde} ${parada.estado !== 'PENDIENTE' ? 'opacity-90' : ''}`}>
-      <div className="flex items-start gap-3">
-        <div className="w-8 h-8 rounded-full bg-botella-100 text-botella-800 font-black text-sm flex items-center justify-center shrink-0">{numero}</div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <Link to={`/app/clientes/${c.id}`} className="font-bold text-gray-900 hover:text-botella-700 truncate">{c.nombre}</Link>
-            {parada.estado === 'VISITADA' && parada.horaVisita && (
-              <span className="chip bg-emerald-100 text-emerald-700 shrink-0">✓ {fmtHora(parada.horaVisita)}</span>
-            )}
-          </div>
-          {c.telefono && <a href={`tel:${c.telefono}`} className="text-xs text-botella-600 mt-0.5 active:underline flex items-center gap-1"><Icon name="phone" className="w-3 h-3" />{c.telefono}</a>}
-          {c.direccion && (
-            <div className="text-xs text-gray-500 mt-0.5">
-              {dirGoogle
-                ? <a href={dirGoogle} target="_blank" rel="noreferrer" className="active:underline hover:underline inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{c.direccion}</a>
-                : <span className="inline-flex items-center gap-1"><Icon name="map-pin" className="w-3 h-3" />{c.direccion}</span>}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Productos para este cliente */}
-      <div className="mt-3 bg-botella-50/60 border border-botella-200 rounded-lg p-3">
-        <div className="flex items-center justify-between mb-1.5">
-          <span className="text-[10px] uppercase tracking-wide font-bold text-botella-700 inline-flex items-center gap-1"><Icon name="box" className="w-3 h-3" />Productos</span>
-          <span className="text-lg font-black text-botella-900">{cantTotal} u.</span>
-        </div>
-        {items.length === 0 ? (
-          <p className="text-[11px] text-gray-500 italic">Sin productos asignados</p>
-        ) : (
-          <div className="space-y-0.5">
-            {items.map(it => (
-              <div key={it.id} className="flex justify-between text-[12px] text-gray-700">
-                <span className="truncate">{it.vinoNombre}</span>
-                <span className="font-bold ml-2 shrink-0">×{it.cantidad}</span>
+                {!bloqueado && (
+                  <div className="mt-3 grid grid-cols-3 gap-1.5">
+                    <button
+                      onClick={() => {
+                        const updated = viaje.paradas.map(pp => pp.id === p.id ? { ...p, estado: 'VISITADA', horaVisita: new Date().toISOString() } : pp)
+                        actualizar({ ...viaje, paradas: updated })
+                      }}
+                      className={`py-2 rounded text-xs font-bold transition ${p.estado === 'VISITADA' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700'}`}
+                    >
+                      ✓ Visitada
+                    </button>
+                    <button onClick={() => {}} className="py-2 rounded text-xs font-bold bg-gray-100 text-gray-700">⏭ Omitir</button>
+                    <button onClick={() => {}} className="py-2 rounded text-xs font-bold bg-dorado-50 text-dorado-800">↻ Pendiente</button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         )}
-        {!bloqueado && (
-          <button onClick={onEditItems} className="mt-2 w-full py-1.5 text-[11px] font-bold text-botella-700 bg-white border border-botella-200 hover:bg-botella-50 rounded transition">
-            ✎ {items.length === 0 ? 'Asignar productos' : 'Editar productos'}
-          </button>
-        )}
       </div>
 
-      {!bloqueado && (
-        <>
-          <div className="mt-3 grid grid-cols-3 gap-1.5">
-            <button onClick={() => onEstado(parada.id, 'VISITADA')} className={`py-2 rounded-lg text-xs font-bold transition ${parada.estado === 'VISITADA' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700 active:bg-emerald-100'}`}>✓ Visitada</button>
-            <button onClick={() => onEstado(parada.id, 'OMITIDA')} className={`py-2 rounded-lg text-xs font-bold transition ${parada.estado === 'OMITIDA' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}>⏭ Omitir</button>
-            <button onClick={() => onEstado(parada.id, 'PENDIENTE')} className={`py-2 rounded-lg text-xs font-bold transition ${parada.estado === 'PENDIENTE' ? 'bg-dorado-500 text-white' : 'bg-dorado-50 text-dorado-800 active:bg-dorado-100'}`}>↻ Pendiente</button>
-          </div>
-          <button onClick={() => onEliminar(parada.id)} className="mt-2 text-xs text-red-500 active:text-red-700 hover:underline">Quitar del viaje</button>
-        </>
+      {/* MODAL VENTA RÁPIDA */}
+      {paradaVenta && (
+        <PanelVentaRapida
+          parada={paradaVenta}
+          bodega={bodega}
+          onClose={() => setParadaVenta(null)}
+          onGuardar={async (items) => {
+            const updated = viaje.paradas.map(p => p.id === paradaVenta.id ? { ...p, items } : p)
+            await actualizar({ ...viaje, paradas: updated })
+            setParadaVenta(null)
+          }}
+        />
       )}
     </div>
   )
 }
 
-function ModalEditarItems({
+function PanelVentaRapida({
   parada, bodega, onClose, onGuardar,
 }: {
-  parada: Parada | null
+  parada: Parada
   bodega: Vino[]
   onClose: () => void
-  onGuardar: (items: { vinoId: number; cantidad: number }[]) => void
+  onGuardar: (items: any[]) => Promise<void>
 }) {
   const [local, setLocal] = useState<Record<number, number>>({})
   const [busq, setBusq] = useState('')
-
-  useEffect(() => {
-    if (parada) {
-      const map: Record<number, number> = {}
-      for (const it of (parada.items ?? [])) map[it.vinoId] = it.cantidad
-      setLocal(map)
-      setBusq('')
-    }
-  }, [parada])
-
-  if (!parada) return null
+  const [guardando, setGuardando] = useState(false)
 
   const q = busq.toLowerCase()
-  const filtrados = busq
-    ? bodega.filter(v => v.nombre.toLowerCase().includes(q) || (v.bodega ?? '').toLowerCase().includes(q))
-    : bodega
+  const filtrados = busq ? bodega.filter(v => v.nombre.toLowerCase().includes(q)) : bodega
+  const total = Object.values(local).reduce((a, b) => a + b, 0)
 
-  const total = Object.values(local).reduce((acc, n) => acc + n, 0)
-
-  const setCant = (vinoId: number, cant: number) => {
-    setLocal(m => {
-      const next = { ...m }
-      if (cant <= 0) delete next[vinoId]
-      else next[vinoId] = cant
-      return next
-    })
-  }
-
-  const guardar = () => {
+  const guardar = async () => {
+    setGuardando(true)
     const items = Object.entries(local)
       .map(([vId, c]) => ({ vinoId: Number(vId), cantidad: c }))
       .filter(it => it.cantidad > 0)
-    onGuardar(items)
-    onClose()
+    await onGuardar(items)
+    setGuardando(false)
   }
 
   return (
-    <Modal open size="xl" title={`Productos para ${parada.cliente.nombre}`} onClose={onClose}>
+    <Modal open size="lg" title={`📍 ${parada.cliente.nombre} - REGISTRAR VENTA`} onClose={onClose}>
       <div className="space-y-3">
-        <div className="flex items-center justify-between bg-botella-50 border border-botella-200 rounded-lg p-3">
-          <span className="text-sm font-semibold text-botella-900">Total</span>
-          <span className="text-2xl font-black text-botella-900">{total} u.</span>
+        <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-center justify-between">
+          <span className="font-bold text-emerald-900">TOTAL</span>
+          <span className="text-3xl font-black text-emerald-700">{total} u.</span>
         </div>
 
         <input
+          autoFocus
           className="input"
-          placeholder="Buscar producto..."
+          placeholder="Buscar vino..."
           value={busq}
           onChange={e => setBusq(e.target.value)}
         />
 
-        <div className="border border-gray-100 rounded-lg max-h-[55vh] overflow-y-auto divide-y divide-gray-100">
+        <div className="border border-gray-100 rounded-lg max-h-[50vh] overflow-y-auto divide-y">
           {filtrados.length === 0 ? (
-            <p className="p-6 text-center text-sm text-gray-400">Sin productos. Cargá en Bodega.</p>
+            <p className="p-6 text-center text-sm text-gray-400">Sin productos</p>
           ) : (
             filtrados.map(v => {
               const cant = local[v.id] ?? 0
               return (
-                <div key={v.id} className={`flex items-center gap-2 p-3 ${cant > 0 ? 'bg-botella-50/40' : ''}`}>
+                <div key={v.id} className="flex items-center gap-2 p-3">
                   <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
-                    {v.fotoUrl
-                      ? <img src={v.fotoUrl} alt={v.nombre} className="w-full h-full object-cover" />
-                      : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
+                    {v.fotoUrl ? <img src={v.fotoUrl} alt={v.nombre} className="w-full h-full object-cover" /> : <Icon name="wine-bottle" className="w-5 h-5 text-gray-300" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-bold text-sm text-gray-900 truncate">{v.nombre}</p>
-                    <div className="flex gap-2 text-[11px] text-gray-500">
-                      {v.bodega && <span className="truncate">{v.bodega}</span>}
-                      <span>· Stock: <span className={v.stock <= 5 ? 'text-red-600 font-bold' : ''}>{v.stock}</span></span>
-                    </div>
+                    <p className="font-bold text-sm text-gray-900">{v.nombre}</p>
+                    <p className="text-xs text-gray-500">{v.bodega} · Stock: {v.stock}</p>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button onClick={() => setCant(v.id, Math.max(0, cant - 1))} disabled={cant === 0} className="w-9 h-9 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40 text-xl font-black text-gray-700">−</button>
-                    <input
-                      type="number" inputMode="numeric" min={0} value={cant || ''} placeholder="0"
-                      onChange={e => setCant(v.id, Math.max(0, Number(e.target.value) || 0))}
-                      className="w-14 h-9 text-center text-base font-black bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-botella-500"
-                    />
-                    <button onClick={() => setCant(v.id, cant + 1)} className="w-9 h-9 rounded-lg bg-dorado-500 hover:bg-dorado-400 text-botella-950 text-xl font-black">+</button>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button onClick={() => setLocal(m => ({ ...m, [v.id]: Math.max(0, (m[v.id] ?? 0) - 1) }))} className="w-9 h-9 rounded bg-gray-100 text-lg font-black">−</button>
+                    <input type="number" inputMode="numeric" min="0" value={cant || ''} placeholder="0" onChange={e => setLocal(m => ({ ...m, [v.id]: Math.max(0, Number(e.target.value) || 0) }))} className="w-12 h-9 text-center text-sm font-black border border-gray-300 rounded" />
+                    <button onClick={() => setLocal(m => ({ ...m, [v.id]: (m[v.id] ?? 0) + 1 }))} className="w-9 h-9 rounded bg-emerald-600 text-white text-lg font-black">+</button>
                   </div>
                 </div>
               )
@@ -461,7 +255,9 @@ function ModalEditarItems({
 
         <div className="flex justify-end gap-2 pt-2">
           <button onClick={onClose} className="btn-ghost">Cancelar</button>
-          <button onClick={guardar} className="btn-primary">Guardar</button>
+          <button onClick={guardar} disabled={guardando || total === 0} className="btn-primary">
+            {guardando ? 'Guardando...' : `Guardar (${total} u.)`}
+          </button>
         </div>
       </div>
     </Modal>
