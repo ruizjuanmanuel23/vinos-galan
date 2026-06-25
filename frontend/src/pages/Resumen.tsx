@@ -34,59 +34,59 @@ export default function Resumen() {
     <div className="space-y-5">
       <div className="flex items-start sm:items-end justify-between gap-2 flex-wrap">
         <div>
-          <h1 className="page-title">📊 Resumen</h1>
-          <p className="page-subtitle">Dashboard de hoy</p>
+          <h1 className="page-title text-4xl sm:text-5xl font-black bg-gradient-to-r from-botella-900 to-dorado-600 bg-clip-text text-transparent">📊 Resumen</h1>
+          <p className="page-subtitle text-gray-600 font-semibold">Dashboard de hoy · {new Date().toLocaleDateString('es-AR', { weekday: 'long', day: '2-digit', month: 'long' })}</p>
         </div>
-        <Link to="/app/viajes" className="btn-primary text-xs sm:text-sm">
+        <Link to="/app/viajes" className="btn-primary text-xs sm:text-sm bg-gradient-to-r from-botella-700 to-botella-600 hover:from-botella-800 hover:to-botella-700 shadow-lg transition-all">
           {viajesEnCurso > 0 ? `${viajesEnCurso} Viaje${viajesEnCurso !== 1 ? 's' : ''} en curso →` : 'Ir a Viajes'}
         </Link>
       </div>
 
-      {/* STATS HOY - GRANDES */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="card p-4 sm:p-5 bg-gradient-to-br from-emerald-50 to-white border-emerald-200">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-700">Ventas</p>
-          <p className="text-3xl sm:text-4xl font-black text-emerald-900 mt-2">{ventasHoy}</p>
-          <p className="text-[11px] text-emerald-600 mt-1">operaciones</p>
+      {/* STATS HOY - GRANDES Y LLAMATIVOS */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="card p-5 sm:p-6 bg-gradient-to-br from-emerald-500 via-emerald-400 to-emerald-300 text-white shadow-lg hover:shadow-xl transition-shadow rounded-xl border-0">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-50 opacity-90">Ventas</p>
+          <p className="text-4xl sm:text-5xl font-black mt-3 drop-shadow">{ventasHoy}</p>
+          <p className="text-[10px] text-emerald-50 mt-2 opacity-80">operaciones hoy</p>
         </div>
 
-        <div className="card p-4 sm:p-5 bg-gradient-to-br from-dorado-50 to-white border-dorado-200">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-dorado-700">Productos</p>
-          <p className="text-3xl sm:text-4xl font-black text-dorado-800 mt-2">{productosHoy}</p>
-          <p className="text-[11px] text-dorado-600 mt-1">unidades</p>
+        <div className="card p-5 sm:p-6 bg-gradient-to-br from-amber-500 via-amber-400 to-amber-300 text-white shadow-lg hover:shadow-xl transition-shadow rounded-xl border-0">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-amber-50 opacity-90">Productos</p>
+          <p className="text-4xl sm:text-5xl font-black mt-3 drop-shadow">{productosHoy}</p>
+          <p className="text-[10px] text-amber-50 mt-2 opacity-80">unidades</p>
         </div>
 
-        <div className="card p-4 sm:p-5 bg-gradient-to-br from-botella-50 to-white border-botella-200">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-botella-700">Paradas</p>
-          <p className="text-3xl sm:text-4xl font-black text-botella-900 mt-2">{paradasHoy}</p>
-          <p className="text-[11px] text-botella-600 mt-1">visitadas</p>
+        <div className="card p-5 sm:p-6 bg-gradient-to-br from-botella-600 via-botella-500 to-botella-400 text-white shadow-lg hover:shadow-xl transition-shadow rounded-xl border-0">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-white opacity-90">Paradas</p>
+          <p className="text-4xl sm:text-5xl font-black mt-3 drop-shadow">{paradasHoy}</p>
+          <p className="text-[10px] text-white mt-2 opacity-80">visitadas</p>
         </div>
 
-        <div className="card p-4 sm:p-5 bg-gradient-to-br from-blue-50 to-white border-blue-200">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-blue-700">Stock bajo</p>
-          <p className="text-3xl sm:text-4xl font-black text-blue-900 mt-2">{stockBajo.length}</p>
-          <p className="text-[11px] text-blue-600 mt-1">productos críticos</p>
+        <div className="card p-5 sm:p-6 bg-gradient-to-br from-red-500 via-red-400 to-red-300 text-white shadow-lg hover:shadow-xl transition-shadow rounded-xl border-0">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-red-50 opacity-90">Stock bajo</p>
+          <p className="text-4xl sm:text-5xl font-black mt-3 drop-shadow">{stockBajo.length}</p>
+          <p className="text-[10px] text-red-50 mt-2 opacity-80">críticos</p>
         </div>
       </div>
 
       {/* VIAJE HOY */}
       {viajeHoy && (
-        <div className="card p-4 sm:p-5 border-l-4 border-dorado-500 bg-gradient-to-r from-dorado-50 to-white">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-black text-gray-900 flex items-center gap-2">
-              <Icon name="truck" className="w-5 h-5 text-dorado-700" />
+        <div className="card p-6 sm:p-7 bg-gradient-to-r from-dorado-500 via-amber-400 to-dorado-400 text-white shadow-xl rounded-xl border-0">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-black flex items-center gap-2">
+              <Icon name="truck" className="w-6 h-6" />
               Viaje de hoy
             </h2>
-            <Link to={`/app/viajes/${viajeHoy.id}`} className="text-xs font-bold text-dorado-700 hover:underline">
+            <Link to={`/app/viajes/${viajeHoy.id}`} className="text-xs font-bold bg-white/20 hover:bg-white/30 px-3 py-1.5 rounded-lg transition">
               Ver detalles →
             </Link>
           </div>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Progreso</p>
-              <p className="text-2xl font-black text-botella-900">{paradasHoy}/{viajeHoy.paradas.length}</p>
+              <p className="text-xs text-white/80 uppercase tracking-wide">Progreso</p>
+              <p className="text-3xl font-black mt-1 drop-shadow">{paradasHoy}/{viajeHoy.paradas.length}</p>
             </div>
-            <div className="h-16 w-16 rounded-full bg-gradient-to-br from-botella-400 to-botella-600 flex items-center justify-center text-white font-black text-xl">
+            <div className="h-20 w-20 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-white font-black text-2xl shadow-lg border-2 border-white/30">
               {viajeHoy.paradas.length > 0 ? Math.round((paradasHoy / viajeHoy.paradas.length) * 100) : 0}%
             </div>
           </div>
@@ -95,21 +95,21 @@ export default function Resumen() {
 
       {/* STOCK BAJO */}
       {stockBajo.length > 0 && (
-        <div className="card p-4 border-l-4 border-red-500 bg-red-50">
-          <h2 className="text-base font-bold text-red-900 mb-3 flex items-center gap-2">
-            <Icon name="alert-circle" className="w-5 h-5 text-red-600" />
+        <div className="card p-5 sm:p-6 border-l-4 border-red-600 bg-gradient-to-r from-red-50 to-red-25 rounded-xl shadow-md">
+          <h2 className="text-lg font-bold text-red-900 mb-4 flex items-center gap-2">
+            <Icon name="alert-circle" className="w-6 h-6 text-red-600" />
             ⚠️ Stock crítico
           </h2>
           <div className="space-y-2">
             {stockBajo.slice(0, 5).map(v => (
-              <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-2.5">
+              <div key={v.id} className="flex items-center justify-between bg-white rounded-lg p-3.5 shadow hover:shadow-md transition border-l-3 border-red-500">
                 <div>
                   <p className="font-bold text-sm text-gray-900">{v.nombre}</p>
                   <p className="text-xs text-gray-500">{v.bodega}</p>
                 </div>
-                <div className="text-right">
-                  <p className="font-black text-red-600 text-lg">{v.stock}</p>
-                  <p className="text-[10px] text-gray-500">unidades</p>
+                <div className="text-right bg-red-100 rounded-lg px-3 py-2">
+                  <p className="font-black text-red-700 text-xl">{v.stock}</p>
+                  <p className="text-[9px] text-red-600 font-bold">unidades</p>
                 </div>
               </div>
             ))}
@@ -119,23 +119,30 @@ export default function Resumen() {
 
       {/* VIAJES RECIENTES */}
       <div>
-        <h2 className="text-base font-bold text-gray-900 mb-3">Viajes recientes</h2>
-        <div className="space-y-2">
+        <h2 className="text-lg font-bold text-gray-900 mb-4">Viajes recientes</h2>
+        <div className="space-y-3">
           {viajes.slice(0, 5).map(v => {
             const visitadas = v.paradas.filter(p => p.estado === 'VISITADA').length
             const total = v.paradas.length
+            const progreso = total > 0 ? (visitadas / total) * 100 : 0
             return (
               <Link
                 key={v.id}
                 to={`/app/viajes/${v.id}`}
-                className="card p-3 flex items-center justify-between hover:bg-gray-50 transition"
+                className="card p-4 flex items-center justify-between hover:shadow-lg transition-all border-l-3 border-dorado-500 bg-white rounded-lg"
               >
                 <div className="min-w-0 flex-1">
                   <p className="font-bold text-sm text-gray-900 truncate">{v.titulo ?? 'Viaje'}</p>
-                  <p className="text-xs text-gray-500">{v.fecha} · {visitadas}/{total} paradas</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <p className="text-xs text-gray-500">{v.fecha}</p>
+                    <div className="flex-1 max-w-xs bg-gray-200 h-1.5 rounded-full overflow-hidden">
+                      <div className="h-full bg-gradient-to-r from-botella-500 to-dorado-400 transition-all" style={{ width: `${progreso}%` }} />
+                    </div>
+                    <p className="text-xs text-gray-500 font-bold">{visitadas}/{total}</p>
+                  </div>
                 </div>
-                <span className={`chip text-xs ${v.estado === 'FINALIZADO' ? 'bg-gray-100 text-gray-600' : 'bg-dorado-100 text-dorado-800'}`}>
-                  {v.estado === 'FINALIZADO' ? '✓ Finalizado' : '🚛 En curso'}
+                <span className={`chip text-xs font-bold rounded-full px-3 py-1.5 ${v.estado === 'FINALIZADO' ? 'bg-gray-100 text-gray-700' : 'bg-dorado-100 text-dorado-800'}`}>
+                  {v.estado === 'FINALIZADO' ? '✓' : '🚛'}
                 </span>
               </Link>
             )

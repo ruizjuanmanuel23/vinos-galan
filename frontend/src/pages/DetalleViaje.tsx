@@ -61,37 +61,38 @@ export default function DetalleViaje() {
       </div>
 
       {/* PROGRESO */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
-        <div className="card p-3 sm:p-4">
-          <p className="text-[10px] uppercase tracking-wide font-bold text-gray-500">Paradas</p>
-          <p className="text-2xl font-black text-botella-900 mt-1">{visitadas}/{total}</p>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="card p-4 sm:p-5 bg-gradient-to-br from-botella-500 to-botella-600 text-white shadow-lg rounded-xl border-0">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-white/80">Paradas</p>
+          <p className="text-3xl sm:text-4xl font-black text-white mt-2 drop-shadow">{visitadas}/{total}</p>
         </div>
-        <div className="card p-3 sm:p-4 bg-emerald-50 border-emerald-200">
-          <p className="text-[10px] uppercase tracking-wide font-bold text-emerald-700">Visitadas</p>
-          <p className="text-2xl font-black text-emerald-700 mt-1">{visitadas}</p>
+        <div className="card p-4 sm:p-5 bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg rounded-xl border-0">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-white/80">Visitadas</p>
+          <p className="text-3xl sm:text-4xl font-black text-white mt-2 drop-shadow">{visitadas}</p>
         </div>
-        <div className="card p-3 sm:p-4 bg-dorado-50 border-dorado-200">
-          <p className="text-[10px] uppercase tracking-wide font-bold text-dorado-700">Avance</p>
-          <p className="text-2xl font-black text-dorado-700 mt-1">{Math.round(progreso)}%</p>
+        <div className="card p-4 sm:p-5 bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-lg rounded-xl border-0">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-white/80">Avance</p>
+          <p className="text-3xl sm:text-4xl font-black text-white mt-2 drop-shadow">{Math.round(progreso)}%</p>
         </div>
       </div>
 
-      <div className="card p-4">
-        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-          <div className="h-full bg-botella-600 transition-all" style={{ width: `${progreso}%` }} />
+      <div className="card p-4 bg-gradient-to-r from-gray-100 to-gray-50 rounded-xl shadow-md">
+        <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+          <div className="h-full bg-gradient-to-r from-botella-600 via-dorado-400 to-emerald-500 transition-all shadow-lg" style={{ width: `${progreso}%` }} />
         </div>
+        <p className="text-xs text-gray-500 text-center mt-2 font-bold">{Math.round(progreso)}% completado</p>
       </div>
 
       {/* CARGA */}
-      <div className="card p-4 bg-gradient-to-br from-botella-50 to-white border-l-4 border-dorado-500">
-        <p className="text-[10px] uppercase tracking-wide font-bold text-botella-700 mb-2">🚛 Carga del camión</p>
-        <p className="text-3xl font-black text-botella-900">{totalProductos} unidades</p>
+      <div className="card p-6 sm:p-7 bg-gradient-to-br from-botella-600 via-botella-500 to-botella-400 text-white shadow-xl rounded-xl border-0">
+        <p className="text-[11px] uppercase tracking-widest font-bold text-white/90 mb-3">🚛 Carga del camión</p>
+        <p className="text-4xl sm:text-5xl font-black drop-shadow">{totalProductos} <span className="text-2xl text-white/80">unidades</span></p>
         {carga.length > 0 && (
-          <div className="mt-3 grid grid-cols-2 gap-2">
+          <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-2">
             {carga.map(c => (
-              <div key={c.vinoId} className="text-xs bg-white rounded px-2 py-1">
-                <p className="font-bold text-gray-900 truncate">{c.vinoNombre}</p>
-                <p className="text-gray-500">×{c.cantidad}</p>
+              <div key={c.vinoId} className="text-xs bg-white/20 backdrop-blur rounded-lg px-3 py-2.5 border border-white/30">
+                <p className="font-bold text-white truncate">{c.vinoNombre}</p>
+                <p className="text-white/80 font-bold text-lg">×{c.cantidad}</p>
               </div>
             ))}
           </div>
@@ -104,9 +105,9 @@ export default function DetalleViaje() {
         {total === 0 ? (
           <p className="text-center text-gray-400 py-8">Sin paradas.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {paradasReales.map((p, idx) => (
-              <div key={p.id} className="card p-3 sm:p-4 border-l-4 border-dorado-500">
+              <div key={p.id} className="card p-4 sm:p-5 border-l-4 border-dorado-500 hover:shadow-lg transition-all rounded-lg bg-white">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -127,9 +128,9 @@ export default function DetalleViaje() {
                 {!bloqueado && p.estado !== 'VISITADA' && (
                   <button
                     onClick={() => setParadaVenta(p)}
-                    className="mt-3 w-full py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition"
+                    className="mt-4 w-full py-3 text-sm font-black text-white bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 rounded-lg transition-all shadow-lg hover:shadow-xl active:scale-95"
                   >
-                    + REGISTRAR VENTA
+                    💰 + REGISTRAR VENTA
                   </button>
                 )}
 

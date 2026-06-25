@@ -31,11 +31,11 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-50 to-gray-100 flex">
       {/* ========== SIDEBAR — solo desktop ========== */}
       <aside
-        className="hidden lg:flex group/sidebar bg-botella-900 text-white flex-col shrink-0 sticky top-0 h-screen z-40
-                   w-16 hover:w-60 transition-[width] duration-300 ease-in-out overflow-hidden shadow-xl"
+        className="hidden lg:flex group/sidebar bg-gradient-to-b from-botella-950 via-botella-900 to-botella-800 text-white flex-col shrink-0 sticky top-0 h-screen z-40
+                   w-16 hover:w-60 transition-[width] duration-300 ease-in-out overflow-hidden shadow-2xl border-r border-botella-700"
       >
         {/* Logo — click vuelve a la landing */}
         <Link to="/" title="Volver al inicio" className="h-[72px] flex items-center px-3 border-b border-botella-800 shrink-0 hover:bg-botella-800/50 transition">
