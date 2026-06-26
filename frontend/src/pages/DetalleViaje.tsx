@@ -153,7 +153,7 @@ export default function DetalleViaje() {
                   <div className="mt-3 grid grid-cols-3 gap-1.5">
                     <button
                       onClick={() => {
-                        const updated = viaje.paradas.map(pp => pp.id === p.id ? { ...p, estado: 'VISITADA', horaVisita: new Date().toISOString() } : pp)
+                        const updated = viaje.paradas.map(pp => pp.id === p.id ? { ...p, estado: 'VISITADA' as const, horaVisita: new Date().toISOString() } : pp)
                         actualizar({ ...viaje, paradas: updated })
                       }}
                       className={`py-2 rounded text-xs font-bold transition ${p.estado === 'VISITADA' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-700'}`}

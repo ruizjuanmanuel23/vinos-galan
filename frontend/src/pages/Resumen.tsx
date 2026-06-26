@@ -97,7 +97,6 @@ export default function Resumen() {
       {stockBajo.length > 0 && (
         <div className="card p-5 sm:p-6 border-l-4 border-red-600 bg-gradient-to-r from-red-50 to-red-25 rounded-xl shadow-md">
           <h2 className="text-lg font-bold text-red-900 mb-4 flex items-center gap-2">
-            <Icon name="alert-circle" className="w-6 h-6 text-red-600" />
             ⚠️ Stock crítico
           </h2>
           <div className="space-y-2">

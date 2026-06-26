@@ -78,22 +78,33 @@ export default function ClienteFicha() {
     setShowEditar(false); cargar()
   }
   const guardarDeuda = async () => {
+    // Deuda sync: guardar en localStorage, sincronizar cuando backend disponible
     const payload = {
       descripcion: formDeuda.descripcion, monto: Number(formDeuda.monto),
       clienteId: clienteId, fecha: formDeuda.fecha || new Date().toISOString().split('T')[0],
     }
     if (editDeuda) {
       // await db.updateDeuda(editDeuda.id, payload)
+    } else {
+      const deudas = JSON.parse(localStorage.getItem('deudas') || '[]')
+      deudas.push({ ...payload, id: Date.now() })
+      localStorage.setItem('deudas', JSON.stringify(deudas))
     }
-    else await api.post('/deudas', payload)
     setShowDeuda(false); setEditDeuda(null); setFormDeuda({ descripcion: '', monto: '', fecha: '' })
     cargar()
   }
   const eliminarDeuda = async (deuId: number) => {
-    if (confirm('¿Eliminar?')) { await api.delete(`/deudas/${deuId}`); cargar() }
+    if (confirm('¿Eliminar?')) {
+      const deudas = JSON.parse(localStorage.getItem('deudas') || '[]').filter((d: any) => d.id !== deuId)
+      localStorage.setItem('deudas', JSON.stringify(deudas))
+      cargar()
+    }
   }
   const eliminarCliente = async () => {
-    if (confirm('¿Eliminar cliente?')) { await api.delete(`/clientes/${id}`); navigate('/app/clientes') }
+    if (confirm('¿Eliminar cliente?')) {
+      await db.deleteCliente(clienteId)
+      navigate('/app/clientes')
+    }
   }
 
   if (!cliente) return <p className="text-center text-gray-400 py-12">Cargando...</p>
